@@ -1,0 +1,91 @@
+Day_Number,Day_Name,Week_Number,Shift,Supervisors,Mechanics,Workers
+1,Monday,1,MORNING,Robert Johnson,Nicole Phillips,Kevin Brown
+1,Monday,1,DAY,,James Mitchell,"Steven Martinez, Ashley Taylor"
+1,Monday,1,NIGHT,,Maria Garcia,Nathan Scott
+2,Tuesday,1,MORNING,Jennifer Wilson,Lisa Williams,Stephanie Lewis
+2,Tuesday,1,DAY,,Maria Garcia,"Rachel Davis, Katherine Hall"
+2,Tuesday,1,NIGHT,,Thomas Baker,Kevin Brown
+3,Wednesday,1,MORNING,David Rodriguez,Elena Petrov,Michelle Harris
+3,Wednesday,1,DAY,,Maria Garcia,"Joshua Clark, Matthew Allen"
+3,Wednesday,1,NIGHT,,Daniel Murphy,Ashley Taylor
+4,Thursday,1,MORNING,Michael Anderson,Christopher Lee,Rachel Davis
+4,Thursday,1,DAY,,Amanda Foster,"Steven Martinez, Michelle Harris"
+4,Thursday,1,NIGHT,,Nicole Phillips,Katherine Hall
+5,Friday,1,MORNING,Sarah Thompson,Christopher Lee,Kevin Brown
+5,Friday,1,DAY,,Nicole Phillips,"Steven Martinez, Stephanie Lewis"
+5,Friday,1,NIGHT,,Thomas Baker,Brian Cooper
+6,Saturday,1,MORNING,Sarah Thompson,Daniel Murphy,Matthew Allen
+6,Saturday,1,DAY,,James Mitchell,"Stephanie Lewis, Katherine Hall"
+6,Saturday,1,NIGHT,,Christopher Lee,Ashley Taylor
+7,Sunday,1,MORNING,Michael Anderson,Thomas Baker,Michelle Harris
+7,Sunday,1,DAY,,Elena Petrov,"Brian Cooper, Nathan Scott"
+7,Sunday,1,NIGHT,,Lisa Williams,Steven Martinez
+8,Monday,2,MORNING,Jennifer Wilson,James Mitchell,Andrew Walker
+8,Monday,2,DAY,,Nicole Phillips,"Joshua Clark, Ryan King"
+8,Monday,2,NIGHT,,Amanda Foster,Stephanie Lewis
+9,Tuesday,2,MORNING,Jennifer Wilson,Marcus Chen,Brian Cooper
+9,Tuesday,2,DAY,,Elena Petrov,"Steven Martinez, Michelle Harris"
+9,Tuesday,2,NIGHT,,Lisa Williams,Jessica Young
+10,Wednesday,2,MORNING,Michael Anderson,Marcus Chen,Joshua Clark
+10,Wednesday,2,DAY,,Christopher Lee,"Kevin Brown, Lauren Wright"
+10,Wednesday,2,NIGHT,,Elena Petrov,Andrew Walker
+11,Thursday,2,MORNING,Jennifer Wilson,Nicole Phillips,Michelle Harris
+11,Thursday,2,DAY,,Thomas Baker,"Brian Cooper, Joshua Clark"
+11,Thursday,2,NIGHT,,Elena Petrov,Rachel Davis
+12,Friday,2,MORNING,Michael Anderson,Thomas Baker,Matthew Allen
+12,Friday,2,DAY,,James Mitchell,"Stephanie Lewis, Andrew Walker"
+12,Friday,2,NIGHT,,Daniel Murphy,Lauren Wright
+13,Saturday,2,MORNING,Sarah Thompson,Nicole Phillips,Brian Cooper
+13,Saturday,2,DAY,,Amanda Foster,"Ryan King, Nathan Scott"
+13,Saturday,2,NIGHT,,Elena Petrov,Katherine Hall
+14,Sunday,2,MORNING,Jennifer Wilson,Maria Garcia,Jessica Young
+14,Sunday,2,DAY,,Lisa Williams,"Ashley Taylor, Stephanie Lewis"
+14,Sunday,2,NIGHT,,Amanda Foster,Matthew Allen
+15,Monday,3,MORNING,Robert Johnson,James Mitchell,Brian Cooper
+15,Monday,3,DAY,,Thomas Baker,"Kevin Brown, Stephanie Lewis"
+15,Monday,3,NIGHT,,Maria Garcia,Rachel Davis
+16,Tuesday,3,MORNING,David Rodriguez,Christopher Lee,Andrew Walker
+16,Tuesday,3,DAY,,James Mitchell,"Ryan King, Lauren Wright"
+16,Tuesday,3,NIGHT,,Lisa Williams,Matthew Allen
+17,Wednesday,3,MORNING,Robert Johnson,Daniel Murphy,Kevin Brown
+17,Wednesday,3,DAY,,Nicole Phillips,"Steven Martinez, Joshua Clark"
+17,Wednesday,3,NIGHT,,Marcus Chen,Ashley Taylor
+18,Thursday,3,MORNING,Michael Anderson,Lisa Williams,Andrew Walker
+18,Thursday,3,DAY,,Amanda Foster,"Jessica Young, Lauren Wright"
+18,Thursday,3,NIGHT,,Elena Petrov,Stephanie Lewis
+19,Friday,3,MORNING,David Rodriguez,Thomas Baker,Rachel Davis
+19,Friday,3,DAY,,Amanda Foster,"Ashley Taylor, Lauren Wright"
+19,Friday,3,NIGHT,,Christopher Lee,Nathan Scott
+20,Saturday,3,MORNING,Robert Johnson,Nicole Phillips,Michelle Harris
+20,Saturday,3,DAY,,Maria Garcia,"Joshua Clark, Katherine Hall"
+20,Saturday,3,NIGHT,,Christopher Lee,Steven Martinez
+21,Sunday,3,MORNING,Sarah Thompson,Amanda Foster,Rachel Davis
+21,Sunday,3,DAY,,James Mitchell,"Kevin Brown, Nathan Scott"
+21,Sunday,3,NIGHT,,Maria Garcia,Ashley Taylor
+22,Monday,4,MORNING,David Rodriguez,Christopher Lee,Steven Martinez
+22,Monday,4,DAY,,Maria Garcia,"Jessica Young, Ryan King"
+22,Monday,4,NIGHT,,Daniel Murphy,Brian Cooper
+23,Tuesday,4,MORNING,Jennifer Wilson,Marcus Chen,Nathan Scott
+23,Tuesday,4,DAY,,Christopher Lee,"Brian Cooper, Stephanie Lewis"
+23,Tuesday,4,NIGHT,,Daniel Murphy,Michelle Harris
+24,Wednesday,4,MORNING,David Rodriguez,Lisa Williams,Ashley Taylor
+24,Wednesday,4,DAY,,Marcus Chen,"Katherine Hall, Ryan King"
+24,Wednesday,4,NIGHT,,Maria Garcia,Andrew Walker
+25,Thursday,4,MORNING,David Rodriguez,Thomas Baker,Joshua Clark
+25,Thursday,4,DAY,,Nicole Phillips,"Andrew Walker, Ryan King"
+25,Thursday,4,NIGHT,,Marcus Chen,Rachel Davis
+26,Friday,4,MORNING,Sarah Thompson,Amanda Foster,Andrew Walker
+26,Friday,4,DAY,,Daniel Murphy,"Steven Martinez, Jessica Young"
+26,Friday,4,NIGHT,,Elena Petrov,Ryan King
+27,Saturday,4,MORNING,Jennifer Wilson,Maria Garcia,Matthew Allen
+27,Saturday,4,DAY,,Marcus Chen,"Andrew Walker, Nathan Scott"
+27,Saturday,4,NIGHT,,Daniel Murphy,Lauren Wright
+28,Sunday,4,MORNING,Robert Johnson,Elena Petrov,Ryan King
+28,Sunday,4,DAY,,James Mitchell,"Matthew Allen, Lauren Wright"
+28,Sunday,4,NIGHT,,Amanda Foster,Jessica Young
+29,Monday,5,MORNING,Michael Anderson,Marcus Chen,Matthew Allen
+29,Monday,5,DAY,,Lisa Williams,"Joshua Clark, Lauren Wright"
+29,Monday,5,NIGHT,,Amanda Foster,Katherine Hall
+30,Tuesday,5,MORNING,Robert Johnson,Nicole Phillips,Brian Cooper
+30,Tuesday,5,DAY,,Thomas Baker,"Jessica Young, Nathan Scott"
+30,Tuesday,5,NIGHT,,Marcus Chen,Michelle Harris

@@ -1,0 +1,160 @@
+{
+  "employees": [
+    {
+      "id": 1,
+      "fullName": "Michael Anderson",
+      "role": "supervisor"
+    },
+    {
+      "id": 2,
+      "fullName": "Sarah Thompson",
+      "role": "supervisor"
+    },
+    {
+      "id": 3,
+      "fullName": "David Rodriguez",
+      "role": "supervisor"
+    },
+    {
+      "id": 4,
+      "fullName": "Jennifer Wilson",
+      "role": "supervisor"
+    },
+    {
+      "id": 5,
+      "fullName": "Robert Johnson",
+      "role": "supervisor"
+    },
+    {
+      "id": 6,
+      "fullName": "Marcus Chen",
+      "role": "mechanic"
+    },
+    {
+      "id": 7,
+      "fullName": "Elena Petrov",
+      "role": "mechanic"
+    },
+    {
+      "id": 8,
+      "fullName": "James Mitchell",
+      "role": "mechanic"
+    },
+    {
+      "id": 9,
+      "fullName": "Maria Garcia",
+      "role": "mechanic"
+    },
+    {
+      "id": 10,
+      "fullName": "Thomas Baker",
+      "role": "mechanic"
+    },
+    {
+      "id": 11,
+      "fullName": "Lisa Williams",
+      "role": "mechanic"
+    },
+    {
+      "id": 12,
+      "fullName": "Christopher Lee",
+      "role": "mechanic"
+    },
+    {
+      "id": 13,
+      "fullName": "Amanda Foster",
+      "role": "mechanic"
+    },
+    {
+      "id": 14,
+      "fullName": "Daniel Murphy",
+      "role": "mechanic"
+    },
+    {
+      "id": 15,
+      "fullName": "Nicole Phillips",
+      "role": "mechanic"
+    },
+    {
+      "id": 16,
+      "fullName": "Kevin Brown",
+      "role": "worker"
+    },
+    {
+      "id": 17,
+      "fullName": "Rachel Davis",
+      "role": "worker"
+    },
+    {
+      "id": 18,
+      "fullName": "Steven Martinez",
+      "role": "worker"
+    },
+    {
+      "id": 19,
+      "fullName": "Ashley Taylor",
+      "role": "worker"
+    },
+    {
+      "id": 20,
+      "fullName": "Brian Cooper",
+      "role": "worker"
+    },
+    {
+      "id": 21,
+      "fullName": "Michelle Harris",
+      "role": "worker"
+    },
+    {
+      "id": 22,
+      "fullName": "Joshua Clark",
+      "role": "worker"
+    },
+    {
+      "id": 23,
+      "fullName": "Stephanie Lewis",
+      "role": "worker"
+    },
+    {
+      "id": 24,
+      "fullName": "Andrew Walker",
+      "role": "worker"
+    },
+    {
+      "id": 25,
+      "fullName": "Katherine Hall",
+      "role": "worker"
+    },
+    {
+      "id": 26,
+      "fullName": "Matthew Allen",
+      "role": "worker"
+    },
+    {
+      "id": 27,
+      "fullName": "Jessica Young",
+      "role": "worker"
+    },
+    {
+      "id": 28,
+      "fullName": "Ryan King",
+      "role": "worker"
+    },
+    {
+      "id": 29,
+      "fullName": "Lauren Wright",
+      "role": "worker"
+    },
+    {
+      "id": 30,
+      "fullName": "Nathan Scott",
+      "role": "worker"
+    }
+  ],
+  "summary": {
+    "total_employees": 30,
+    "supervisors": 5,
+    "mechanics": 10,
+    "workers": 15
+  }
+}
