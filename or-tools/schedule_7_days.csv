@@ -1,0 +1,22 @@
+Day_Number,Day_Name,Week_Number,Shift,Supervisors,Mechanics,Workers
+1,Monday,1,MORNING,Sarah Thompson,Christopher Lee,Stephanie Lewis
+1,Monday,1,DAY,,Maria Garcia,"Joshua Clark, Matthew Allen"
+1,Monday,1,NIGHT,,Elena Petrov,Katherine Hall
+2,Tuesday,1,MORNING,Jennifer Wilson,Amanda Foster,Joshua Clark
+2,Tuesday,1,DAY,,Maria Garcia,"Rachel Davis, Ryan King"
+2,Tuesday,1,NIGHT,,James Mitchell,Jessica Young
+3,Wednesday,1,MORNING,David Rodriguez,Daniel Murphy,Joshua Clark
+3,Wednesday,1,DAY,,Elena Petrov,"Steven Martinez, Michelle Harris"
+3,Wednesday,1,NIGHT,,Thomas Baker,Stephanie Lewis
+4,Thursday,1,MORNING,David Rodriguez,James Mitchell,Ashley Taylor
+4,Thursday,1,DAY,,Nicole Phillips,"Kevin Brown, Ryan King"
+4,Thursday,1,NIGHT,,Maria Garcia,Steven Martinez
+5,Friday,1,MORNING,Robert Johnson,Marcus Chen,Brian Cooper
+5,Friday,1,DAY,,Christopher Lee,"Kevin Brown, Katherine Hall"
+5,Friday,1,NIGHT,,Amanda Foster,Andrew Walker
+6,Saturday,1,MORNING,Sarah Thompson,Lisa Williams,Steven Martinez
+6,Saturday,1,DAY,,Amanda Foster,"Michelle Harris, Stephanie Lewis"
+6,Saturday,1,NIGHT,,Christopher Lee,Rachel Davis
+7,Sunday,1,MORNING,Robert Johnson,Daniel Murphy,Nathan Scott
+7,Sunday,1,DAY,,Thomas Baker,"Rachel Davis, Jessica Young"
+7,Sunday,1,NIGHT,,Nicole Phillips,Lauren Wright
