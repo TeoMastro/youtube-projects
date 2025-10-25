@@ -1,0 +1,621 @@
+{
+  "name": "wordpress teomastro.com chatbot",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 2
+            }
+          ]
+        }
+      },
+      "id": "d81cda4e-22a7-44ae-90f4-f2f521258f18",
+      "name": "Schedule Trigger - Daily at 2 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        -48,
+        16
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {},
+      "id": "8d2dc776-b6b6-4c8f-a04e-08c5c0c55338",
+      "name": "Manual Trigger - Test Setup",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        0,
+        208
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": true,
+        "options": {
+          "status": "publish"
+        }
+      },
+      "id": "2241cf9c-894f-4fd0-ac62-ca9263382621",
+      "name": "WordPress - Get All Posts",
+      "type": "n8n-nodes-base.wordpress",
+      "position": [
+        224,
+        0
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "wordpressApi": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
+          "name": "Wordpress account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "ea921910-d4e0-4ddc-82ef-f692c2b8e155",
+      "name": "Merge Posts and Pages",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        448,
+        112
+      ],
+      "typeVersion": 2.1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-field",
+              "name": "id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "title-field",
+              "name": "title",
+              "value": "={{ $json.title.rendered }}",
+              "type": "string"
+            },
+            {
+              "id": "content-field",
+              "name": "content",
+              "value": "={{ $json.content.rendered }}",
+              "type": "string"
+            },
+            {
+              "id": "url-field",
+              "name": "url",
+              "value": "={{ $json.link }}",
+              "type": "string"
+            },
+            {
+              "id": "type-field",
+              "name": "content_type",
+              "value": "={{ $json.type }}",
+              "type": "string"
+            },
+            {
+              "id": "date-field",
+              "name": "publication_date",
+              "value": "={{ $json.date }}",
+              "type": "string"
+            },
+            {
+              "id": "modified-field",
+              "name": "modification_date",
+              "value": "={{ $json.modified }}",
+              "type": "string"
+            },
+            {
+              "id": "excerpt-field",
+              "name": "excerpt",
+              "value": "={{ $json.excerpt.rendered }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2bb85905-b2a1-428e-8ce9-3d07df09780d",
+      "name": "Normalize Content Fields",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        672,
+        112
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "html": "={{ $json.content }}",
+        "options": {}
+      },
+      "id": "0ffbebca-119b-459b-ab70-56cae87bdb1b",
+      "name": "Convert HTML to Markdown",
+      "type": "n8n-nodes-base.markdown",
+      "position": [
+        880,
+        112
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "data-field",
+              "name": "data",
+              "value": "={{ $json.data }}",
+              "type": "string"
+            },
+            {
+              "id": "title-meta",
+              "name": "title",
+              "value": "={{ $('Normalize Content Fields').item.json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "url-meta",
+              "name": "url",
+              "value": "={{ $('Normalize Content Fields').item.json.url }}",
+              "type": "string"
+            },
+            {
+              "id": "type-meta",
+              "name": "content_type",
+              "value": "={{ $('Normalize Content Fields').item.json.content_type }}",
+              "type": "string"
+            },
+            {
+              "id": "pubdate-meta",
+              "name": "publication_date",
+              "value": "={{ $('Normalize Content Fields').item.json.publication_date }}",
+              "type": "string"
+            },
+            {
+              "id": "moddate-meta",
+              "name": "modification_date",
+              "value": "={{ $('Normalize Content Fields').item.json.modification_date }}",
+              "type": "string"
+            },
+            {
+              "id": "id-meta",
+              "name": "id",
+              "value": "={{ $('Normalize Content Fields').item.json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "21d63e71-0758-4828-8f55-54a5dc50426d",
+      "name": "Prepare Data for Embedding",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        1088,
+        112
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "fda910c5-4fd8-4b8f-a04e-62e424977283",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        368,
+        768
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "openAiApi": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
+          "name": "Teo openai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('When chat message received').item.json.chatInput }}",
+        "options": {
+          "systemMessage": "You are TeoBot, the AI assistant for Teo Mastromanolis's portfolio website. Your primary goal is to help visitors quickly learn about Teo's work, skills, and projects by providing brief, accurate answers.\n\nCONTEXT YOU'LL USE:\nYou have access to content from Teo's website including his bio, projects, skills, and contact information. You can ONLY answer based on this provided context - never use external knowledge or make assumptions.\n\nYOUR IDENTITY:\n- Friendly but professional\n- Direct and efficient with words\n- Focused on helping visitors understand Teo's expertise\n- Based in Thessaloniki, Greece (like Teo)\n\nWHAT TO SAY:\n✓ Answer questions about Teo's work, projects, and skills\n✓ Provide contact information when asked\n✓ Mention specific projects like CraftMyMenu, Next Launch Kit, etc.\n✓ Describe his technical skills (PHP, Next.js, React, etc.)\n✓ Keep answers to 1-2 short sentences (maximum 15 words)\n✓ Be conversational and natural\n✓ If asked \"hello\" or greetings, respond warmly and offer to help\n\nWHAT NOT TO SAY:\n✗ Never discuss topics unrelated to Teo or the website\n✗ Never make up information not in the context\n✗ Never give long, detailed explanations unless asked for \"more details\"\n✗ Never discuss weather, news, general knowledge, or off-topic subjects\n✗ Never write more than 2 sentences for simple questions\n✗ Never include full job descriptions when a simple answer works\n\nRESPONSE EXAMPLES:\nQ: \"What does Teo do?\"\nA: \"He's a full-stack developer specializing in web applications.\"\n\nQ: \"Does he know PHP?\"\nA: \"Yes, he's experienced in PHP and Yii2.\"\n\nQ: \"Tell me about CraftMyMenu\"\nA: \"It's a SaaS platform that digitizes restaurant menus.\"\n\nQ: \"What's the weather?\"\nA: \"I can only answer questions about Teo and his work.\"\n\nRemember: Be brief, be accurate, be helpful. Your job is to connect visitors with the information they need - quickly."
+        }
+      },
+      "id": "d3a72807-60e5-4e4e-98ef-53ae977e25cb",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        448,
+        544
+      ],
+      "typeVersion": 1.7
+    },
+    {
+      "parameters": {
+        "url": "https://teomastro.com/wp-json/wp/v2/pages",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "per_page",
+              "value": "100"
+            },
+            {
+              "name": "status",
+              "value": "publish"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        192
+      ],
+      "id": "a6048358-2988-4e62-9b14-3c7e9adeac2e",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        1280,
+        128
+      ],
+      "id": "17c06f2d-409b-404c-b1e1-a8403625cb02",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1232,
+        320
+      ],
+      "id": "fba2371a-2deb-43f5-a8a8-9aec34a41641",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
+          "name": "Teo openai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.data }}",
+        "textSplittingMode": "custom",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        1408,
+        304
+      ],
+      "id": "6d80f20f-0dac-4004-8cb8-b550ac465847",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1408,
+        448
+      ],
+      "id": "e32e7426-07ce-4177-93d2-8dd9db0cce97",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        576,
+        768
+      ],
+      "id": "f604b89d-2435-40b0-ad35-f8754c8f0725",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "public": true,
+        "mode": "webhook",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        160,
+        560
+      ],
+      "id": "69816dfc-24a6-4f7e-8b61-e6cc1667031a",
+      "name": "When chat message received"
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
+      "id": "ad8569cb-01e7-442a-a7f9-db4ce939db7d",
+      "name": "Embeddings OpenAI1",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1,
+      "position": [
+        768,
+        768
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
+          "name": "Teo openai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Search Teo's website content",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        768,
+        592
+      ],
+      "id": "dece64ec-4e95-418c-9657-700122210275",
+      "name": "Supabase Vector Store2",
+      "credentials": {
+        "supabaseApi": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger - Daily at 2 AM": {
+      "main": [
+        []
+      ]
+    },
+    "Manual Trigger - Test Setup": {
+      "main": [
+        [
+          {
+            "node": "WordPress - Get All Posts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WordPress - Get All Posts": {
+      "main": [
+        [
+          {
+            "node": "Merge Posts and Pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Posts and Pages": {
+      "main": [
+        [
+          {
+            "node": "Normalize Content Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Content Fields": {
+      "main": [
+        [
+          {
+            "node": "Convert HTML to Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert HTML to Markdown": {
+      "main": [
+        [
+          {
+            "node": "Prepare Data for Embedding",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Merge Posts and Pages",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Prepare Data for Embedding": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store2",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store2": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": null,
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "REPLACE_WITH_YOUR_INSTANCE_ID"
+  },
+  "id": null,
+  "tags": []
+}
