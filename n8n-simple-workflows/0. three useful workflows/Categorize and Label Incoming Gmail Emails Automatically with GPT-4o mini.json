@@ -1,0 +1,497 @@
+{
+  "name": "Categorize and Label Incoming Gmail Emails Automatically with GPT-4o mini",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "id": "43213c04-af84-46b3-95a1-e1ed1112f988",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "position": [
+        1136,
+        512
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "dNdC9dt0sd3OjzvS",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "id": "65924fac-5776-4e4f-928a-d1180e730a9c",
+      "name": "OpenAI Chat Model2",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        1696,
+        752
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "openAiApi": {
+          "id": "DQX28WREINIoUWoo",
+          "name": "Teo openai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"email_label\": \"business\"\n}"
+      },
+      "id": "887dac9a-7bae-4797-8967-1114660c194a",
+      "name": "Structured Output Parser1",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "position": [
+        1952,
+        752
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "content": "## 1. Gmail Trigger + Label Checker\n[Read more about Gmail Trigger node Editing](https://docs.n8n.io/integrations/builtin/trigger-nodes/n8n-nodes-base.gmailtrigger/?utm_source=n8n_app&utm_medium=node_settings_modal-credential_link&utm_campaign=n8n-nodes-base.gmailTrigger)\n[Read more about Filter node editing](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.filter/?utm_source=n8n_app&utm_medium=node_settings_modal-credential_link&utm_campaign=n8n-nodes-base.filter)\n\n📬 Incoming email check\nThis section triggers when a new email is received in Gmail.\nIt uses a filter to ignore any emails that already have labels, so only unlabeled messages are processed.\nYou can adjust the frequency of the trigger (e.g., every minute, hours or Custom using Cron ⏱️) in the Gmail node.",
+        "height": 700,
+        "width": 560,
+        "color": 7
+      },
+      "id": "fa913085-1c4f-4d61-938c-9bbf24fe9e69",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1040,
+        240
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "##  Sort Gmail messages by category with AI \n\n## 👥 Who's it for  \nThis workflow is perfect for individuals or teams who receive a high volume of emails 📥 and want to automatically organize them into Gmail labels 🏷️ using AI. No coding required!\n\n## 🤖 What it does  \nIt automatically processes new Gmail emails, skips those that already have labels, sends the content to an AI Agent powered by GPT-4o mini 🧠, and applies a relevant label based on the content. All labels must exist in Gmail beforehand.\n\n## ⚙️ How it works  \n1. **📬 Gmail Trigger** – Activates on new email received.  \n2. **🚫 Filter** – Skips emails that already have a label.  \n3. **🧠 AI Agent (GPT-4o mini)** – Analyzes the message and decides which label fits best.  \n4. **🧾 Structured Output Parser** – Formats the AI output into a clean JSON.  \n5. **🔀 Switch Node** – Routes each email to the correct label path based on the AI result.  \n6. **🏷️ Gmail Nodes** – Assign the Gmail label to the original email.\n\n## 📋 Requirements  \n- Gmail account connected to n8n  \n- Pre-created labels in Gmail matching the AI categories  \n- OpenAI credentials with GPT-4o mini access  \n- n8n's AI Agent & Structured Output Parser nodes  \n\n## 🛠️ How to set up  \n1. Open the workflow and adjust the **trigger interval** (e.g., every minute, hours or Custom using Cron ⏱️)  \n2. Check that the **Filter** skips emails with existing labels  \n3. Define your categories in the **AI Agent prompt** and make sure they match the Gmail labels  \n4. Configure the **Switch Node** conditions for each category  \n5. Ensure each **Gmail Label Node** applies the correct label  \n6. Save and activate the workflow ✅\n\n## 🎨 How to customize the workflow  \n- Add or remove categories in the AI prompt & Switch Node   \n- Fine-tune prompt instructions to match your specific use case  \n",
+        "height": 1100,
+        "width": 620
+      },
+      "id": "a9c899ef-a4f5-4947-9d9b-5d579ae58827",
+      "name": "Sticky Note11",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        368,
+        240
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 2. AI Agent (GPT-4o mini + Output Parser)\n[Read more about the AI Agent node editing](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.agent/?utm_source=n8n_app&utm_medium=node_settings_modal-credential_link&utm_campaign=%40n8n%2Fn8n-nodes-langchain.agent)\n[Read more about the Structured Output Parser node editing](https://docs.n8n.io/integrations/builtin/cluster-nodes/sub-nodes/n8n-nodes-langchain.outputparserstructured/?utm_source=n8n_app&utm_medium=node_settings_modal-credential_link&utm_campaign=%40n8n%2Fn8n-nodes-langchain.outputParserStructured)\n\n🧠 AI-powered categorization\nThe email content is sent to an AI Agent using GPT-4o mini to determine the appropriate label.\nMake sure the prompt includes your predefined categories, and that these labels already exist in Gmail.\nThe Structured Output Parser ensures the AI response is formatted like this:\n{ \"email_label\": \"Your Category Name\" }",
+        "height": 700,
+        "width": 560,
+        "color": 7
+      },
+      "id": "0415122e-6746-408c-a4eb-5d128c80a921",
+      "name": "Sticky Note12",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1616,
+        240
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 3. Apply labels based on AI output\n[Read more about Switch node editing](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.switch/?utm_source=n8n_app&utm_medium=node_settings_modal-credential_link&utm_campaign=n8n-nodes-base.switch)\n[Read more about Gmail node editing](https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.gmail/message-operations/#add-label-to-a-message)\n\n🏷️ Apply labels based on AI output\nThe Switch node uses email_label from the AI response to route each email to the correct label path.\nEach branch corresponds to one category.\nThen, each Gmail node applies the label that matches the category.\n⚠️ Make sure each route and label name matches exactly.",
+        "height": 1300,
+        "width": 760,
+        "color": 7
+      },
+      "id": "446e3625-8388-44f6-b04e-2d2483f1d4d5",
+      "name": "Sticky Note13",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2192,
+        240
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Topic: {{ $json.subject }}\nDescription: {{ $json.text }}\nSender: {{ $json.from.text }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=**Your Role**\nYou are an intelligent email assistant responsible for sorting incoming messages. Your task is to analyze the content, subject, and sender of each email and assign it to the appropriate category.\n\n**Categories**\nCategories for sorting:\n\n-teomastro.com: Emails from the teomastro.com domain, or emails related to teomastro business, projects, or professional matters.\n\n-Personal: Messages from friends, family, or general personal life content that is not work-related.\n\n-Travel: Booking confirmations, tickets, hotel or car rental details, itineraries, or any travel-related correspondence.\n\n-LinkedIn: Emails from LinkedIn including connection requests, job alerts, notifications, messages, or any LinkedIn platform activity.\n\n**Instructions**\n-For each email:\n-Analyze the content, subject, and sender\n-Assign it to ONE of the four categories above\n-If the email is from a teomastro.com address or mentions teomastro business, categorize it as \"teomastro.com\"\n-If the email is from LinkedIn (check sender domain or subject), categorize it as \"LinkedIn\"\n-If you are unsure which category fits, default to \"Personal\"\n\n**Response Format**\nAlways return the result in JSON format:\n\n{\n  \"email_label\": \"LinkedIn\"\n}\n\nIMPORTANT – the response must use the exact label format as listed: \"teomastro.com\", \"Personal\", \"Travel\", or \"LinkedIn\" (exactly as written, case-sensitive)."
+        }
+      },
+      "id": "4b4a928d-5305-40e5-a040-8a2e8787cf30",
+      "name": "Give a Label AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        1728,
+        512
+      ],
+      "typeVersion": 1.8
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "6c287523-4ae2-43c4-8f9a-faf756f01855",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              },
+              "leftValue": "={{ $json.labelIds[0] }}",
+              "rightValue": "Label"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5301b42e-ba3c-4f3c-8f84-e4f9ee4ca724",
+      "name": "Label Checker Filter",
+      "type": "n8n-nodes-base.filter",
+      "position": [
+        1360,
+        512
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "10893f03-231e-4dba-bfdf-69530f908b4d",
+                    "operator": {
+                      "name": "filter.operator.equals",
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.output.email_label }}",
+                    "rightValue": "teomastro.com"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "teomastro.com"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "23e430c2-ac8b-4fb5-bb5a-1fafb9e41b09",
+                    "operator": {
+                      "name": "filter.operator.equals",
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.output.email_label }}",
+                    "rightValue": "Personal"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Personal"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "4e0a670b-4017-4d83-b01a-78a79c55daf2",
+                    "operator": {
+                      "name": "filter.operator.equals",
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.output.email_label }}",
+                    "rightValue": "Travel"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Travel"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "dd6e85bb-df68-4821-b7a7-8b9ede463cdd",
+                    "leftValue": "={{ $json.output.email_label }}",
+                    "rightValue": "LinkedIn",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "LinkedIn"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3ccb8cd6-a329-4507-8158-cbc81b2d31da",
+      "name": "Switch",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        2240,
+        800
+      ],
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "CATEGORY_PERSONAL"
+        ]
+      },
+      "id": "525f3f9f-9bc7-40f1-b6a5-8c3edd75025f",
+      "name": "Personal",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        2720,
+        592
+      ],
+      "webhookId": "d63928b3-89bb-4549-b241-8a5462db0116",
+      "typeVersion": 2.1,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "dNdC9dt0sd3OjzvS",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_2015220513924805969"
+        ]
+      },
+      "id": "70f0255c-de96-44a0-bcd0-748c9f6e4fe4",
+      "name": "teomastro.com",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        2720,
+        432
+      ],
+      "webhookId": "265d6794-4bc1-44e5-b7b0-3a327c860235",
+      "typeVersion": 2.1,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "dNdC9dt0sd3OjzvS",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_4056516286208699806"
+        ]
+      },
+      "id": "12ba969b-d0aa-475c-ab5e-e4151f8df96e",
+      "name": "travel",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        2736,
+        816
+      ],
+      "webhookId": "4513f916-1685-4733-8fa6-6373a90abc5e",
+      "typeVersion": 2.1,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "dNdC9dt0sd3OjzvS",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_4519471167416703843"
+        ]
+      },
+      "id": "878a4399-9095-4edf-85b5-d78d4498a976",
+      "name": "LinkedIn",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        2688,
+        1056
+      ],
+      "webhookId": "4513f916-1685-4733-8fa6-6373a90abc5e",
+      "typeVersion": 2.1,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "dNdC9dt0sd3OjzvS",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "teomastro.com",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Personal",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "travel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Label Checker Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Give a Label AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Label Checker Filter": {
+      "main": [
+        [
+          {
+            "node": "Give a Label AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Give a Label AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Give a Label AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "6fa8417a-e37c-4c21-94d6-eb3173820aa0",
+  "meta": {
+    "templateId": "5595",
+    "instanceId": "96add2e303f72aa16a39eea436903593869549c40bd26622ad76490ad225eb9e"
+  },
+  "id": "Lv2FRr6K9lgaQZCx",
+  "tags": []
+}

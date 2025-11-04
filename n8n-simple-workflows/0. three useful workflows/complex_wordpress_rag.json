@@ -1,0 +1,1814 @@
+{
+  "name": "My workflow 3",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "eba3bef0-77e2-42d0-a6c8-0bd96744330a",
+      "name": "When clicking ‘Test workflow’",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        64,
+        352
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
+      "id": "d1d41b7a-c55c-4851-b62b-c4c78b42bbc1",
+      "name": "Embeddings OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "position": [
+        2144,
+        720
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "openAiApi": {
+          "id": "DQX28WREINIoUWoo",
+          "name": "Teo openai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.data }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "title",
+                "value": "={{ $json.title }}"
+              },
+              {
+                "name": "url",
+                "value": "={{ $json.url }}"
+              },
+              {
+                "name": "content_type",
+                "value": "={{ $json.content_type }}"
+              },
+              {
+                "name": "publication_date",
+                "value": "={{ $json.publication_date }}"
+              },
+              {
+                "name": "modification_date",
+                "value": "={{ $json.modification_date }}"
+              },
+              {
+                "name": "id",
+                "value": "={{ $json.id }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "461879d7-41b4-46e2-861a-3550a10a9e65",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "position": [
+        2368,
+        672
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "chunkSize": 300,
+        "chunkOverlap": 30
+      },
+      "id": "99819b1d-813f-4579-8049-549c22102c8a",
+      "name": "Token Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterTokenSplitter",
+      "position": [
+        2464,
+        880
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
+      "id": "f9acaa0f-ff89-4675-8cdb-12aba83a9811",
+      "name": "Embeddings OpenAI1",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "position": [
+        960,
+        1744
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "openAiApi": {
+          "id": "DQX28WREINIoUWoo",
+          "name": "Teo openai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "81266849-4633-4bda-b69e-9e8d2a4000ba",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        2368,
+        1712
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "openAiApi": {
+          "id": "DQX28WREINIoUWoo",
+          "name": "Teo openai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "0dcbf4e8-a3a8-4f46-b0e4-a3816f54af7f",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        2944,
+        1472
+      ],
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6888175b-853b-457a-96f7-33dfe952a05d",
+              "name": "documents",
+              "type": "string",
+              "value": "={{ \n JSON.stringify(\n $json.documents.map(doc => ({\n metadata: \n 'URL: ' + doc.metadata.url.replaceAll('&rsquo;', \"'\").replaceAll(/[\"]/g, '') + '\\n' +\n 'Publication Date: ' + doc.metadata.publication_date.replaceAll(/[\"]/g, '') + '\\n' +\n 'Modification Date: ' + doc.metadata.modification_date.replaceAll(/[\"]/g, '') + '\\n' +\n 'Content Type: ' + doc.metadata.content_type.replaceAll(/[\"]/g, '') + '\\n' +\n 'Title: ' + doc.metadata.title.replaceAll('&rsquo;', \"'\").replaceAll(/[\"]/g, '') + '\\n',\n \n page_content: doc.pageContent\n }))\n ).replaceAll(/[\\[\\]{}]/g, '')\n}}"
+            },
+            {
+              "id": "ae310b77-4560-4f44-8c4e-8d13f680072e",
+              "name": "sessionId",
+              "type": "string",
+              "value": "={{ $('When chat message received').item.json.sessionId }}"
+            },
+            {
+              "id": "8738f4de-b3c3-45ad-af4b-8311c8105c35",
+              "name": "chatInput",
+              "type": "string",
+              "value": "={{ $('When chat message received').item.json.chatInput }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "05adcd41-089f-4a76-8a2a-1d091b294539",
+      "name": "Set fields",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        1920,
+        1472
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
+      "id": "b67140e7-1fe2-4845-952f-1b0b87dc061a",
+      "name": "Embeddings OpenAI2",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "position": [
+        5968,
+        272
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.data }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "title",
+                "value": "={{ $json.title }}"
+              },
+              {
+                "name": "url",
+                "value": "={{ $json.url }}"
+              },
+              {
+                "name": "content_type",
+                "value": "={{ $json.content_type }}"
+              },
+              {
+                "name": "publication_date",
+                "value": "={{ $json.publication_date }}"
+              },
+              {
+                "name": "modification_date",
+                "value": "={{ $json.modification_date }}"
+              },
+              {
+                "name": "id",
+                "value": "={{ $json.id }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "f8e3e72d-b692-4bd9-882b-95048d344524",
+      "name": "Default Data Loader1",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "position": [
+        6064,
+        272
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "chunkSize": 300,
+        "chunkOverlap": 30
+      },
+      "id": "e97fd7d8-db9f-40fa-aec4-e6673c9660e1",
+      "name": "Token Splitter1",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterTokenSplitter",
+      "position": [
+        6064,
+        384
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "html": "={{ $json.content }}",
+        "options": {}
+      },
+      "id": "c9fd5e4e-d535-46e6-bc58-5c015dbe9a0e",
+      "name": "Markdown1",
+      "type": "n8n-nodes-base.markdown",
+      "position": [
+        5808,
+        304
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select max(created_at) as last_workflow_execution from n8n_website_embedding_histories",
+        "options": {}
+      },
+      "id": "752f565e-a00b-4a48-a062-fa1fdfa68e49",
+      "name": "Postgres",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        3824,
+        304
+      ],
+      "typeVersion": 2.5,
+      "credentials": {
+        "postgres": {
+          "id": "rGm36wSwUBMEZmQc",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "a5993169-8689-4b47-ac30-0b42ca34838e",
+      "name": "Aggregate",
+      "type": "n8n-nodes-base.aggregate",
+      "position": [
+        2864,
+        304
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "8299e922-cfdd-4bfb-9046-89b587c78f66",
+      "name": "Aggregate1",
+      "type": "n8n-nodes-base.aggregate",
+      "position": [
+        6368,
+        80
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "metadata.id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4f596a5b-afbe-463d-b254-673b76f0c6f9",
+      "name": "Aggregate2",
+      "type": "n8n-nodes-base.aggregate",
+      "position": [
+        6752,
+        560
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "# Workflow 1 : Initial Embedding \n## Use this workflow to create the initial embedding for your WordPress website content\n\n",
+        "height": 1015.3571428571431,
+        "width": 3308.2687575224263,
+        "color": 5
+      },
+      "id": "2ce3a346-929d-4eef-8c9d-dba0383d3563",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "# Workflow 2 : Upsert\n## Use this workflow to upsert embeddings for documents stored in the Supabase vector table\n",
+        "height": 1020.4528919414245,
+        "width": 3785.6673412474183,
+        "color": 5
+      },
+      "id": "c6ff82d6-01b1-4cf2-a1db-76855546f9bb",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3376,
+        16
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "# Workflow 3 : Use this workflow to enable chat functionality with your website content. The chat can be embedded into your website to enhance user experience",
+        "height": 817.9199999999992,
+        "width": 3235.199999999999,
+        "color": 5
+      },
+      "id": "fca74af0-c6b6-4863-a172-db4f0b6cb3f6",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        1232
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "fed4f7e0-40be-43b7-9339-6fef86dc5ba5",
+      "name": "Wordpress - Get all posts",
+      "type": "n8n-nodes-base.wordpress",
+      "position": [
+        832,
+        288
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "wordpressApi": {
+          "id": "i7QdTNS865TfNOIa",
+          "name": "Wordpress account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "page",
+        "operation": "getAll",
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "f488a9fb-797f-4d8e-b7ea-f8bc3eb3b745",
+      "name": "Wordpress - Get all pages",
+      "type": "n8n-nodes-base.wordpress",
+      "position": [
+        832,
+        464
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "wordpressApi": {
+          "id": "i7QdTNS865TfNOIa",
+          "name": "Wordpress account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Use filters to create embeddings only for content that you want to include in your GenAI application",
+        "height": 561.4080000000004,
+        "width": 1108.3519999999999
+      },
+      "id": "dece94c9-04ab-4f80-ba8b-a975f528d7f5",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        720,
+        128
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "de6711dc-d03c-488c-bef4-0a853e2d0a14",
+              "name": "publication_date",
+              "type": "string",
+              "value": "={{ $json.date }}"
+            },
+            {
+              "id": "f8e35dcc-c96c-4554-b6bc-8e5d7eca90e3",
+              "name": "modification_date",
+              "type": "string",
+              "value": "={{ $json.modified }}"
+            },
+            {
+              "id": "f6a6e3de-fe39-4cfc-ab07-c4ccfaef78f5",
+              "name": "content_type",
+              "type": "string",
+              "value": "={{ $json.type }}"
+            },
+            {
+              "id": "b0428598-073f-4560-9a0c-01caf3708921",
+              "name": "title",
+              "type": "string",
+              "value": "={{ $json.title.rendered }}"
+            },
+            {
+              "id": "534f51b4-b43a-40d3-8120-58df8043d909",
+              "name": "url",
+              "type": "string",
+              "value": "={{ $json.link }}"
+            },
+            {
+              "id": "dbe0c559-90bd-49f8-960e-0d85d5ed4f5e",
+              "name": "content",
+              "type": "string",
+              "value": "={{ $json.content.rendered }}"
+            },
+            {
+              "id": "892be7c6-b032-4129-b285-1986ed4ee046",
+              "name": "protected",
+              "type": "boolean",
+              "value": "={{ $json.excerpt.protected }}"
+            },
+            {
+              "id": "06fac885-4431-41ff-a43b-6eb84ca57401",
+              "name": "status",
+              "type": "string",
+              "value": "={{ $json.status }}"
+            },
+            {
+              "id": "43b1aea7-895e-41da-a0a6-2f1cec1f1b97",
+              "name": "id",
+              "type": "number",
+              "value": "={{ $json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "126aeb86-0096-4f97-887b-c4477689c9e6",
+      "name": "Set fields1",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        1888,
+        304
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "1f708587-f3d3-487a-843a-b6a2bfad2ca9",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.protected }}",
+              "rightValue": ""
+            },
+            {
+              "id": "04f47269-e112-44c3-9014-749898aca8bd",
+              "operator": {
+                "name": "filter.operator.equals",
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "publish"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "110c14fb-bfd3-413f-a57f-5edb21ea8ee2",
+      "name": "Filter - Only published & unprotected content",
+      "type": "n8n-nodes-base.filter",
+      "position": [
+        2080,
+        304
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "html": "={{ $json.content}}",
+        "options": {}
+      },
+      "id": "b857f0a2-9db2-4edd-9d8e-f59ac1c6b220",
+      "name": "HTML To Markdown",
+      "type": "n8n-nodes-base.markdown",
+      "position": [
+        2304,
+        304
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "tableId": "n8n_website_embedding_histories",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "id",
+              "fieldValue": "={{ $executionId }}"
+            }
+          ]
+        }
+      },
+      "id": "5ffa88fd-3b9c-4c07-ad36-ece8e31aac26",
+      "name": "Supabase - Store workflow execution",
+      "type": "n8n-nodes-base.supabase",
+      "position": [
+        3088,
+        304
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": {
+          "id": "ToAJrFVDvfMzgftS",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Run these two nodes if the \"documents\" table on Supabase and the \"n8n_website_embedding_histories\" table do not exist",
+        "height": 275.2000000000001,
+        "width": 851.1898437499999
+      },
+      "id": "3e1fadaf-1a13-402e-b7fa-fa416513ddc0",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        32,
+        720
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds"
+            }
+          ]
+        }
+      },
+      "id": "2b3994e7-743a-4d62-b59d-d5aa274f82c8",
+      "name": "Every 30 seconds",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        3504,
+        304
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "content": "## Set this node to match the frequency of publishing and updating on your website",
+        "height": 292.5,
+        "width": 336.25
+      },
+      "id": "e7fbb914-0cb3-4e3c-a56d-b5a1e90fecb6",
+      "name": "Sticky Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3392,
+        144
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "url": "https://teomastro.com/wp-json/wp/v2/posts",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "wordpressApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "modified_after",
+              "value": "={{ $json.last_workflow_execution }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9930b038-2735-44b0-9289-dd5ab1770ff6",
+      "name": "Wordpress - Get posts modified after last workflow execution",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        4160,
+        240
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "wordpressApi": {
+          "id": "i7QdTNS865TfNOIa",
+          "name": "Wordpress account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://mydomain.com/wp-json/wp/v2/pages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "wordpressApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "modified_after",
+              "value": "={{ $json.last_workflow_execution }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0b2d0352-c0f4-41ed-a197-248226cafd18",
+      "name": "Wordpress - Get posts modified after last workflow execution1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        4160,
+        464
+      ],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "de6711dc-d03c-488c-bef4-0a853e2d0a14",
+              "name": "publication_date",
+              "type": "string",
+              "value": "={{ $json.date }}"
+            },
+            {
+              "id": "f8e35dcc-c96c-4554-b6bc-8e5d7eca90e3",
+              "name": "modification_date",
+              "type": "string",
+              "value": "={{ $json.modified }}"
+            },
+            {
+              "id": "f6a6e3de-fe39-4cfc-ab07-c4ccfaef78f5",
+              "name": "content_type",
+              "type": "string",
+              "value": "={{ $json.type }}"
+            },
+            {
+              "id": "b0428598-073f-4560-9a0c-01caf3708921",
+              "name": "title",
+              "type": "string",
+              "value": "={{ $json.title.rendered }}"
+            },
+            {
+              "id": "534f51b4-b43a-40d3-8120-58df8043d909",
+              "name": "url",
+              "type": "string",
+              "value": "={{ $json.link }}"
+            },
+            {
+              "id": "dbe0c559-90bd-49f8-960e-0d85d5ed4f5e",
+              "name": "content",
+              "type": "string",
+              "value": "={{ $json.content.rendered }}"
+            },
+            {
+              "id": "892be7c6-b032-4129-b285-1986ed4ee046",
+              "name": "protected",
+              "type": "boolean",
+              "value": "={{ $json.content.protected }}"
+            },
+            {
+              "id": "06fac885-4431-41ff-a43b-6eb84ca57401",
+              "name": "status",
+              "type": "string",
+              "value": "={{ $json.status }}"
+            },
+            {
+              "id": "43b1aea7-895e-41da-a0a6-2f1cec1f1b97",
+              "name": "id",
+              "type": "number",
+              "value": "={{ $json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c1410afa-f932-423a-ab67-db4abc3cc8bd",
+      "name": "Set fields2",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        4992,
+        320
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c2b25d74-91d7-44ea-8598-422100947b07",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.protected }}",
+              "rightValue": ""
+            },
+            {
+              "id": "3e63bf79-25ca-4ccf-aa86-ff5f90e1ece1",
+              "operator": {
+                "name": "filter.operator.equals",
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "publish"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "85382c2d-cb0c-4db2-b1a4-7ff15df45a93",
+      "name": "Filter - Only published and unprotected content",
+      "type": "n8n-nodes-base.filter",
+      "position": [
+        5328,
+        320
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "256cc8d4-f7cd-4afc-8386-e25076837a4e",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [
+        5600,
+        320
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "de6711dc-d03c-488c-bef4-0a853e2d0a14",
+              "name": "publication_date",
+              "type": "string",
+              "value": "={{ $('Loop Over Items').item.json.publication_date }}"
+            },
+            {
+              "id": "f8e35dcc-c96c-4554-b6bc-8e5d7eca90e3",
+              "name": "modification_date",
+              "type": "string",
+              "value": "={{ $('Loop Over Items').item.json.modification_date }}"
+            },
+            {
+              "id": "f6a6e3de-fe39-4cfc-ab07-c4ccfaef78f5",
+              "name": "content_type",
+              "type": "string",
+              "value": "={{ $('Loop Over Items').item.json.content_type }}"
+            },
+            {
+              "id": "b0428598-073f-4560-9a0c-01caf3708921",
+              "name": "title",
+              "type": "string",
+              "value": "={{ $('Loop Over Items').item.json.title }}"
+            },
+            {
+              "id": "534f51b4-b43a-40d3-8120-58df8043d909",
+              "name": "url",
+              "type": "string",
+              "value": "={{ $('Loop Over Items').item.json.url }}"
+            },
+            {
+              "id": "dbe0c559-90bd-49f8-960e-0d85d5ed4f5e",
+              "name": "content",
+              "type": "string",
+              "value": "={{ $('Loop Over Items').item.json.content }}"
+            },
+            {
+              "id": "892be7c6-b032-4129-b285-1986ed4ee046",
+              "name": "protected",
+              "type": "boolean",
+              "value": "={{ $('Loop Over Items').item.json.protected }}"
+            },
+            {
+              "id": "06fac885-4431-41ff-a43b-6eb84ca57401",
+              "name": "status",
+              "type": "string",
+              "value": "={{ $('Loop Over Items').item.json.status }}"
+            },
+            {
+              "id": "43b1aea7-895e-41da-a0a6-2f1cec1f1b97",
+              "name": "id",
+              "type": "number",
+              "value": "={{ $('Loop Over Items').item.json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f0d05f6d-6f62-4fad-99ab-db63638e83f3",
+      "name": "Set fields3",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        6960,
+        560
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "de6711dc-d03c-488c-bef4-0a853e2d0a14",
+              "name": "publication_date",
+              "type": "string",
+              "value": "={{ $('Loop Over Items').item.json.publication_date }}"
+            },
+            {
+              "id": "f8e35dcc-c96c-4554-b6bc-8e5d7eca90e3",
+              "name": "modification_date",
+              "type": "string",
+              "value": "={{ $('Loop Over Items').item.json.modification_date }}"
+            },
+            {
+              "id": "f6a6e3de-fe39-4cfc-ab07-c4ccfaef78f5",
+              "name": "content_type",
+              "type": "string",
+              "value": "={{ $('Loop Over Items').item.json.content_type }}"
+            },
+            {
+              "id": "b0428598-073f-4560-9a0c-01caf3708921",
+              "name": "title",
+              "type": "string",
+              "value": "={{ $('Loop Over Items').item.json.title }}"
+            },
+            {
+              "id": "534f51b4-b43a-40d3-8120-58df8043d909",
+              "name": "url",
+              "type": "string",
+              "value": "={{ $('Loop Over Items').item.json.url }}"
+            },
+            {
+              "id": "dbe0c559-90bd-49f8-960e-0d85d5ed4f5e",
+              "name": "content",
+              "type": "string",
+              "value": "={{ $('Loop Over Items').item.json.content }}"
+            },
+            {
+              "id": "892be7c6-b032-4129-b285-1986ed4ee046",
+              "name": "protected",
+              "type": "boolean",
+              "value": "={{ $('Loop Over Items').item.json.protected }}"
+            },
+            {
+              "id": "06fac885-4431-41ff-a43b-6eb84ca57401",
+              "name": "status",
+              "type": "string",
+              "value": "={{ $('Loop Over Items').item.json.status }}"
+            },
+            {
+              "id": "43b1aea7-895e-41da-a0a6-2f1cec1f1b97",
+              "name": "id",
+              "type": "number",
+              "value": "={{ $('Loop Over Items').item.json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bf8a2309-5cf8-4316-a11a-ed4d218c12ea",
+      "name": "Set fields4",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        6240,
+        800
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "documents",
+          "cachedResultName": "documents"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "id": "5bc56e35-377c-42fc-a8f1-18c701c6e7c7",
+      "name": "Store documents on Supabase",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "position": [
+        5952,
+        80
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "tableId": "n8n_website_embedding_histories"
+      },
+      "id": "eb5cc2f0-00af-405f-bdba-2e45a549a111",
+      "name": "Store workflow execution id and timestamptz",
+      "type": "n8n-nodes-base.supabase",
+      "position": [
+        6624,
+        80
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "document",
+              "renameField": true,
+              "outputFieldName": "documents"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "91253ed6-c349-468b-8f58-e2dfe1d7a25d",
+      "name": "Aggregate documents",
+      "type": "n8n-nodes-base.aggregate",
+      "position": [
+        1520,
+        1472
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Retrieve documents from Supabase immediately after chat input to send metadata to OpenAI",
+        "height": 507.65625,
+        "width": 665.78125
+      },
+      "id": "253fb2e9-b846-442e-91c4-0b25df256de4",
+      "name": "Sticky Note6",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        784,
+        1392
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Switch:\n- **If the document exists and has been updated:** delete rows and insert new embedding\n- **If it’s a new document:** insert embedding",
+        "height": 515.4687499999998,
+        "width": 1198.9843749999998
+      },
+      "id": "f6f72205-7559-449b-90eb-843dfa3bc4d6",
+      "name": "Sticky Note7",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        5936,
+        496
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Enable the pgvector extension to work with embedding vectors\nCREATE EXTENSION vector;\n\n-- Create a table to store your documents with default RLS\nCREATE TABLE\n documents (\n id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,\n CONTENT TEXT, -- corresponds to Document.pageContent\n metadata jsonb, -- corresponds to Document.metadata\n embedding vector (1536) -- 1536 works for OpenAI embeddings, change if needed\n );\n\n-- Enable Row Level Security on the documents table\nALTER TABLE documents ENABLE ROW LEVEL SECURITY;\n\n-- Create a function to search for documents\nCREATE FUNCTION match_documents (\n query_embedding vector (1536),\n match_count INT DEFAULT NULL,\n FILTER jsonb DEFAULT '{}'\n) RETURNS TABLE (\n id BIGINT,\n CONTENT TEXT,\n metadata jsonb,\n similarity FLOAT\n) LANGUAGE plpgsql AS $$\n#variable_conflict use_column\nBEGIN\n RETURN QUERY\n SELECT\n id,\n content,\n metadata,\n 1 - (documents.embedding <=> query_embedding) AS similarity\n FROM documents\n WHERE metadata @> filter\n ORDER BY documents.embedding <=> query_embedding\n LIMIT match_count;\nEND;\n$$;",
+        "options": {}
+      },
+      "id": "1146a9d3-a371-42b0-a865-c003f555e711",
+      "name": "Postgres - Create documents table",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        128,
+        848
+      ],
+      "typeVersion": 2.5,
+      "credentials": {
+        "postgres": {
+          "id": "rGm36wSwUBMEZmQc",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CREATE TABLE\n n8n_website_embedding_histories (\n id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,\n created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()\n );",
+        "options": {}
+      },
+      "id": "beb8386c-e2dc-4cc9-b8b7-9a448371ac03",
+      "name": "Postgres - Create workflow execution history table",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        480,
+        848
+      ],
+      "typeVersion": 2.5,
+      "credentials": {
+        "postgres": {
+          "id": "rGm36wSwUBMEZmQc",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "3afac928-6e03-40de-9e9a-8a8f294842ec",
+      "name": "Merge Wordpress Posts and Pages",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        1232,
+        304
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {},
+      "id": "28679bd3-b78d-4af1-be3a-2db647823856",
+      "name": "Merge retrieved WordPress posts and pages",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        4688,
+        320
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT *\nFROM documents\nWHERE (metadata->>'id')::integer = {{ $json.id }};\n",
+        "options": {}
+      },
+      "id": "cf1e6736-5663-4016-b894-e27b00cf11fc",
+      "name": "Postgres - Filter on existing documents",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        5824,
+        592
+      ],
+      "typeVersion": 2.5,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "documents",
+        "filterType": "string",
+        "filterString": "=metadata->>id=like.{{ $json.metadata.id }}"
+      },
+      "id": "be9742eb-eea2-4fa2-b947-99d0ce13cbb7",
+      "name": "Supabase - Delete row if documents exists",
+      "type": "n8n-nodes-base.supabase",
+      "position": [
+        6464,
+        560
+      ],
+      "executeOnce": false,
+      "typeVersion": 1,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "operator": {
+                      "type": "number",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "leftValue": "={{ $json.metadata.id }}",
+                    "rightValue": ""
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "existing_documents"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "696d1c1b-8674-4549-880e-e0d0ff681905",
+                    "operator": {
+                      "type": "number",
+                      "operation": "notExists",
+                      "singleValue": true
+                    },
+                    "leftValue": "={{ $json.metadata.id }}",
+                    "rightValue": ""
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "new_documents"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "af19a8d0-9526-4f75-b9d9-f0aa9de815c3",
+      "name": "Switch",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        6144,
+        592
+      ],
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "public": true,
+        "mode": "webhook",
+        "options": {}
+      },
+      "id": "42030eb5-ae21-44db-a663-d18487ecf71d",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "position": [
+        224,
+        1472
+      ],
+      "webhookId": "4e762668-c19f-40ec-83bf-302bb9fc6527",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "mode": "load",
+        "tableName": {
+          "__rl": true,
+          "value": "documents_wordpress_test",
+          "mode": "list",
+          "cachedResultName": "documents_wordpress_test"
+        },
+        "prompt": "={{ $json.chatInput }}",
+        "options": {
+          "queryName": "match_documents_wordpress_test"
+        }
+      },
+      "id": "2362adda-928a-4fb8-9198-06ca6d6e6954",
+      "name": "Supabase - Retrieve documents from chatinput",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "position": [
+        944,
+        1472
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": {
+          "id": "ToAJrFVDvfMzgftS",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "agent": "conversationalAgent",
+        "promptType": "define",
+        "text": "=Visitor's question : {{ $json.chatInput }}\nDocuments found: {{ $json.documents }}",
+        "options": {
+          "systemMessage": "You are an assistant tasked with answering questions from visitors to the website {{your_website_url}}.\n\nInput:\nVisitor's question: The question posed by the visitor.\nDocuments found: A selection of documents from the vector database that match the visitor's question. These documents are accompanied by the following metadata:\nurl: The URL of the page or blog post found.\ncontent_type: The type of content (e.g., page or blog article).\npublication_date: The publication date of the document.\nmodification_date: The last modification date of the document.\nObjective:\nProvide a helpful answer using the relevant information from the documents found.\nIMPORTANT : You must always include all metadata (url, content_type, publication_date, and modification_date) directly in the main answer to the visitor to indicate the source of the information. These should not be separated from the main answer, and must be naturally integrated into the response.\nIf multiple documents are used in your response, mention each one with its respective metadata.\nIf no relevant documents are found, or if the documents are insufficient, clearly indicate this in your response.\nImportant: Respond in the language used by the visitor who asked the question.\nExample of forced metadata integration:\n\"The cost of a home charging station for an electric vehicle varies depending on several factors. According to [title of the page](https://example.com/charging-point-price), published on April 8, 2021, and updated on July 24, 2022, the price for a 7kW station is €777.57 including VAT. This page provides further details about the price range and installation considerations.\""
+        }
+      },
+      "id": "44c11f32-aece-4114-b52d-c3a7ea5048b2",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        2352,
+        1472
+      ],
+      "typeVersion": 1.6
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents_wordpress_test",
+          "mode": "list",
+          "cachedResultName": "documents_wordpress_test"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "id": "8d861f34-cd44-4092-85c1-553e6bcca323",
+      "name": "Supabase Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "position": [
+        2512,
+        304
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": {
+          "id": "ToAJrFVDvfMzgftS",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        2464,
+        1776
+      ],
+      "id": "e0b4ff54-6eae-4e02-af84-e6c079f1af61",
+      "name": "Simple Memory"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Supabase - Delete row if documents exists",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres": {
+      "main": [
+        [
+          {
+            "node": "Wordpress - Get posts modified after last workflow execution",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Wordpress - Get posts modified after last workflow execution1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Supabase - Store workflow execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Markdown1": {
+      "main": [
+        [
+          {
+            "node": "Store documents on Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate1": {
+      "main": [
+        [
+          {
+            "node": "Store workflow execution id and timestamptz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate2": {
+      "main": [
+        [
+          {
+            "node": "Set fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set fields1": {
+      "main": [
+        [
+          {
+            "node": "Filter - Only published & unprotected content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set fields2": {
+      "main": [
+        [
+          {
+            "node": "Filter - Only published and unprotected content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set fields3": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set fields4": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Markdown1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Postgres - Filter on existing documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Splitter1": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader1",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 30 seconds": {
+      "main": [
+        [
+          {
+            "node": "Postgres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML To Markdown": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase - Retrieve documents from chatinput",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI2": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Store documents on Supabase",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate documents": {
+      "main": [
+        [
+          {
+            "node": "Set fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader1": {
+      "ai_document": [
+        [
+          {
+            "node": "Store documents on Supabase",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wordpress - Get all pages": {
+      "main": [
+        [
+          {
+            "node": "Merge Wordpress Posts and Pages",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Wordpress - Get all posts": {
+      "main": [
+        [
+          {
+            "node": "Merge Wordpress Posts and Pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Supabase - Retrieve documents from chatinput",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store documents on Supabase": {
+      "main": [
+        [
+          {
+            "node": "Aggregate1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Wordpress Posts and Pages": {
+      "main": [
+        [
+          {
+            "node": "Set fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres - Create documents table": {
+      "main": [
+        [
+          {
+            "node": "Postgres - Create workflow execution history table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Wordpress - Get all posts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Wordpress - Get all pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres - Filter on existing documents": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge retrieved WordPress posts and pages": {
+      "main": [
+        [
+          {
+            "node": "Set fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase - Delete row if documents exists": {
+      "main": [
+        [
+          {
+            "node": "Aggregate2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase - Retrieve documents from chatinput": {
+      "main": [
+        [
+          {
+            "node": "Aggregate documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter - Only published & unprotected content": {
+      "main": [
+        [
+          {
+            "node": "HTML To Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter - Only published and unprotected content": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wordpress - Get posts modified after last workflow execution": {
+      "main": [
+        [
+          {
+            "node": "Merge retrieved WordPress posts and pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wordpress - Get posts modified after last workflow execution1": {
+      "main": [
+        [
+          {
+            "node": "Merge retrieved WordPress posts and pages",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e414a07e-709b-430e-a190-aa5e169d252e",
+  "meta": {
+    "instanceId": "96add2e303f72aa16a39eea436903593869549c40bd26622ad76490ad225eb9e"
+  },
+  "id": "ZRzyGWCljr2P5Jtm",
+  "tags": []
+}
