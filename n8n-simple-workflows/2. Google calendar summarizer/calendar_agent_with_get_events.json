@@ -49,7 +49,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Format calendar events into a readable text summary\nconst events = $input.all();\n\nif (!events || events.length === 0) {\n  return {\n    json: {\n      chatInput: $('When chat message received').item.json.chatInput,\n      calendarSummary: \"You have no events scheduled in the next 7 days.\"\n    }\n  };\n}\n\n// Format each event\nconst formattedEvents = events.map((item, i) => {\n  const event = item.json;\n  \n  let timeStr = '';\n  \n  if (event.start?.dateTime) {\n    const start = new Date(event.start.dateTime);\n    const end = new Date(event.end.dateTime);\n    const startStr = start.toLocaleString('en-US', {\n      weekday: 'short',\n      month: 'short',\n      day: 'numeric',\n      hour: '2-digit',\n      minute: '2-digit'\n    });\n    const endStr = end.toLocaleTimeString('en-US', {\n      hour: '2-digit',\n      minute: '2-digit'\n    });\n    timeStr = `${startStr} - ${endStr}`;\n  } else if (event.start?.date) {\n    const date = new Date(event.start.date);\n    timeStr = date.toLocaleDateString('en-US', {\n      weekday: 'short',\n      month: 'short',\n      day: 'numeric'\n    }) + ' (All day)';\n  }\n  \n  let eventLine = `${i + 1}. ${timeStr}: ${event.summary || 'Untitled'}`;\n  \n  if (event.location) {\n    eventLine += ` @ ${event.location}`;\n  }\n  \n  return eventLine;\n}).join('\\n\\n');\n\nconst summary = `Here are your calendar events for the next 7 days (${events.length} total):\\n\\n${formattedEvents}`;\n\n// Get the original chat input\nconst chatInput = $('When chat message received').item.json.chatInput;\n\nreturn {\n  json: {\n    chatInput: chatInput,\n    calendarSummary: summary\n  }\n};"
+        "jsCode": "// Format calendar events into a readable text summary\nconst events = $input.all();\n\n// Get the original chat input and sessionId at the top\nconst chatInput = $('When chat message received').item.json.chatInput;\nconst sessionId = $('When chat message received').item.json.sessionId;\n\nif (!events || events.length === 0) {\n  return {\n    json: {\n      chatInput: chatInput,\n      sessionId: sessionId,  // Added\n      calendarSummary: \"You have no events scheduled in the next 7 days.\"\n    }\n  };\n}\n\n// Format each event\nconst formattedEvents = events.map((item, i) => {\n  const event = item.json;\n  \n  let timeStr = '';\n  \n  if (event.start?.dateTime) {\n    const start = new Date(event.start.dateTime);\n    const end = new Date(event.end.dateTime);\n    const startStr = start.toLocaleString('en-US', {\n      weekday: 'short',\n      month: 'short',\n      day: 'numeric',\n      hour: '2-digit',\n      minute: '2-digit'\n    });\n    const endStr = end.toLocaleTimeString('en-US', {\n      hour: '2-digit',\n      minute: '2-digit'\n    });\n    timeStr = `${startStr} - ${endStr}`;\n  } else if (event.start?.date) {\n    const date = new Date(event.start.date);\n    timeStr = date.toLocaleDateString('en-US', {\n      weekday: 'short',\n      month: 'short',\n      day: 'numeric'\n    }) + ' (All day)';\n  }\n  \n  let eventLine = `${i + 1}. ${timeStr}: ${event.summary || 'Untitled'}`;\n  \n  if (event.location) {\n    eventLine += ` @ ${event.location}`;\n  }\n  \n  return eventLine;\n}).join('\\n\\n');\n\nconst summary = `Here are your calendar events for the next 7 days (${events.length} total):\\n\\n${formattedEvents}`;\n\nreturn {\n  json: {\n    chatInput: chatInput,\n    sessionId: sessionId,\n    calendarSummary: summary\n  }\n};"
       },
       "id": "13972618-b6c1-457a-b4df-6bd90ba3beaa",
       "name": "Format Events",
@@ -63,7 +63,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=You are a helpful calendar assistant.\n\nToday's date: {{ $now.toFormat('yyyy-MM-dd') }}\nCurrent time: {{ $now.toFormat('HH:mm') }}\n\nThe user's calendar events have already been fetched and formatted. Use this information to answer their questions:\n\n{{ $json.calendarSummary }}\n\nProvide clear, helpful responses about their schedule. Group events by day when it makes sense. Highlight important details like location or timing conflicts.",
+        "text": "=You are a helpful calendar assistant with access to the user's Google Calendar.\n\nToday's date: {{ $now.toFormat('yyyy-MM-dd') }}\nCurrent time: {{ $now.toFormat('HH:mm') }}\n\nCALENDAR DATA:\n{{ $json.calendarSummary }}\n\nINSTRUCTIONS:\n- Answer the user's question naturally and conversationally\n- Only share information relevant to their question\n- Don't dump the entire schedule unless they ask for it\n- Be helpful and proactive when appropriate\n\nNow answer the user's question: \"{{ $json.chatInput }}\"",
         "hasOutputParser": true,
         "options": {}
       },
@@ -98,7 +98,7 @@
     {
       "parameters": {
         "sessionIdType": "customKey",
-        "sessionKey": "={{ $('When chat message received').item.json.sessionId }}"
+        "sessionKey": "=={{ $json.sessionId }}"
       },
       "id": "32f25680-b37c-4ea5-8229-401281baa3dc",
       "name": "Window Buffer Memory",
@@ -172,7 +172,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "2d73905d-427d-4c65-b945-5863fd5569f2",
+  "versionId": "c1952b97-59ad-4b0a-8ba7-e8a0422c064c",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "96add2e303f72aa16a39eea436903593869549c40bd26622ad76490ad225eb9e"
