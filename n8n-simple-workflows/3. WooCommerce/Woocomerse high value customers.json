@@ -1,0 +1,590 @@
+{
+  "name": "3. Woocomerse high value customers",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        400,
+        416
+      ],
+      "id": "fc110144-9d73-4203-acc5-08e007108f5c",
+      "name": "Schedule Trigger (Daily 9 AM)"
+    },
+    {
+      "parameters": {
+        "resource": "order",
+        "operation": "getAll",
+        "returnAll": true,
+        "options": {
+          "after": "={{$now.minus(30, 'days').toISO()}}",
+          "status": "completed,processing"
+        }
+      },
+      "type": "n8n-nodes-base.wooCommerce",
+      "typeVersion": 1,
+      "position": [
+        672,
+        320
+      ],
+      "id": "325fa1ad-81c2-4a27-8e01-5838ada43bbb",
+      "name": "Get Orders (Last 30 Days)",
+      "credentials": {
+        "wooCommerceApi": {
+          "id": "cn5HDPwXd5kwCNex",
+          "name": "WooCommerce account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "customer",
+        "operation": "getAll",
+        "returnAll": true,
+        "filters": {
+          "order": "desc",
+          "orderby": "registered_date"
+        }
+      },
+      "type": "n8n-nodes-base.wooCommerce",
+      "typeVersion": 1,
+      "position": [
+        672,
+        496
+      ],
+      "id": "6733deb3-7d2a-478d-a560-0654c06c10ac",
+      "name": "Get All Customers",
+      "credentials": {
+        "wooCommerceApi": {
+          "id": "cn5HDPwXd5kwCNex",
+          "name": "WooCommerce account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": true,
+        "options": {
+          "status": "publish"
+        }
+      },
+      "type": "n8n-nodes-base.wooCommerce",
+      "typeVersion": 1,
+      "position": [
+        672,
+        672
+      ],
+      "id": "b954041d-f7d6-4957-9478-fbda9145b4f0",
+      "name": "Get All Products",
+      "credentials": {
+        "wooCommerceApi": {
+          "id": "cn5HDPwXd5kwCNex",
+          "name": "WooCommerce account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get data from all input connections\nconst allInputs = $input.all();\n\n// Separate the three inputs\nconst orders = allInputs[0].json;\nconst customers = allInputs[1].json; \nconst products = allInputs[2].json;\n\n// Make sure orders is an array\nconst orderArray = Array.isArray(orders) ? orders : [orders];\n\nconsole.log(`Processing ${orderArray.length} orders`);\n\n// Create a map of customer spending\nconst customerData = {};\n\n// Process all orders\norderArray.forEach(order => {\n  const customerId = order.customer_id;\n  \n  // Skip guest orders (customer_id = 0)\n  if (!customerId || customerId === 0) return;\n  \n  if (!customerData[customerId]) {\n    customerData[customerId] = {\n      customerId: customerId,\n      email: order.billing.email,\n      name: `${order.billing.first_name} ${order.billing.last_name}`,\n      totalOrders: 0,\n      totalSpent: 0,\n      lastOrderDate: order.date_created,\n      products: [],\n      orderIds: []\n    };\n  }\n  \n  customerData[customerId].totalOrders += 1;\n  customerData[customerId].totalSpent += parseFloat(order.total);\n  customerData[customerId].orderIds.push(order.id);\n  \n  // Track products purchased\n  if (order.line_items && Array.isArray(order.line_items)) {\n    order.line_items.forEach(item => {\n      customerData[customerId].products.push({\n        name: item.name,\n        quantity: item.quantity,\n        total: item.total\n      });\n    });\n  }\n  \n  // Update last order date if more recent\n  if (new Date(order.date_created) > new Date(customerData[customerId].lastOrderDate)) {\n    customerData[customerId].lastOrderDate = order.date_created;\n  }\n});\n\n// Determine customer tier\nconst enrichedCustomers = Object.values(customerData).map(customer => {\n  let tier = 'Standard';\n  let tierEmoji = '🟢';\n  \n  if (customer.totalSpent > 1000) {\n    tier = 'VIP';\n    tierEmoji = '💎';\n  } else if (customer.totalSpent > 500) {\n    tier = 'Premium';\n    tierEmoji = '⭐';\n  }\n  \n  return {\n    ...customer,\n    tier: tier,\n    tierEmoji: tierEmoji,\n    avgOrderValue: (customer.totalSpent / customer.totalOrders).toFixed(2),\n    uniqueProducts: [...new Set(customer.products.map(p => p.name))].length,\n    productList: [...new Set(customer.products.map(p => p.name))].join(', '),\n    daysSinceLastOrder: Math.floor((new Date() - new Date(customer.lastOrderDate)) / (1000 * 60 * 60 * 24))\n  };\n});\n\n// Sort by total spent (highest first)\nenrichedCustomers.sort((a, b) => b.totalSpent - a.totalSpent);\n\nconsole.log(`Found ${enrichedCustomers.length} customers`);\n\nreturn enrichedCustomers.map(customer => ({ json: customer }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        496
+      ],
+      "id": "50b30843-2192-499f-bdb9-ea3a28803197",
+      "name": "Analyze Customer Data"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "25f380d1-c549-4c68-9dc9-760a8f6da942",
+              "leftValue": "={{$json.tier}}",
+              "rightValue": "VIP",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1200,
+        496
+      ],
+      "id": "d221705c-c805-429d-a3b5-c255ea80064e",
+      "name": "Check Customer Tier"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{$json.email}}",
+        "subject": "=Thank you for being a valued customer, {{$json.name}}! 💎",
+        "message": "=<html>\n<body style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto;\">\n  <div style=\"background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;\">\n    <h1 style=\"color: white; margin: 0;\">💎 VIP Customer</h1>\n  </div>\n  \n  <div style=\"padding: 30px; background-color: #f9f9f9;\">\n    <h2 style=\"color: #667eea;\">Hi {{$json.name}},</h2>\n    \n    <p>We wanted to take a moment to thank you for your incredible support and loyalty!</p>\n    \n    <div style=\"background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\">\n      <h3 style=\"color: #667eea; margin-top: 0;\">Your VIP Stats 📊</h3>\n      <table style=\"width: 100%; border-collapse: collapse;\">\n        <tr>\n          <td style=\"padding: 10px; border-bottom: 1px solid #eee;\"><strong>Total Orders:</strong></td>\n          <td style=\"padding: 10px; border-bottom: 1px solid #eee; text-align: right;\">{{$json.totalOrders}}</td>\n        </tr>\n        <tr>\n          <td style=\"padding: 10px; border-bottom: 1px solid #eee;\"><strong>Total Spent:</strong></td>\n          <td style=\"padding: 10px; border-bottom: 1px solid #eee; text-align: right; color: #667eea; font-weight: bold;\">${{$json.totalSpent.toFixed(2)}}</td>\n        </tr>\n        <tr>\n          <td style=\"padding: 10px; border-bottom: 1px solid #eee;\"><strong>Average Order:</strong></td>\n          <td style=\"padding: 10px; border-bottom: 1px solid #eee; text-align: right;\">${{$json.avgOrderValue}}</td>\n        </tr>\n        <tr>\n          <td style=\"padding: 10px;\"><strong>Last Order:</strong></td>\n          <td style=\"padding: 10px; text-align: right;\">{{$json.daysSinceLastOrder}} days ago</td>\n        </tr>\n      </table>\n    </div>\n    \n    <div style=\"background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;\">\n      <h3 style=\"margin-top: 0; color: #856404;\">🎁 Your VIP Benefits:</h3>\n      <ul style=\"margin: 10px 0; padding-left: 20px;\">\n        <li style=\"margin: 8px 0;\">✨ Early access to new products</li>\n        <li style=\"margin: 8px 0;\">🎯 Exclusive VIP discount codes</li>\n        <li style=\"margin: 8px 0;\">🚀 Priority customer support</li>\n        <li style=\"margin: 8px 0;\">🎉 Special birthday surprises</li>\n        <li style=\"margin: 8px 0;\">📦 Free shipping on all orders</li>\n      </ul>\n    </div>\n    \n    <div style=\"background-color: #667eea; color: white; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;\">\n      <h3 style=\"margin: 0 0 10px 0;\">Your Exclusive Code</h3>\n      <div style=\"background-color: white; color: #667eea; padding: 15px; border-radius: 5px; font-size: 24px; font-weight: bold; letter-spacing: 2px;\">\n        VIP20\n      </div>\n      <p style=\"margin: 10px 0 0 0; font-size: 14px;\">20% off your next purchase</p>\n    </div>\n    \n    <p>Thank you for being an incredible part of our community!</p>\n    \n    <p style=\"margin-top: 30px;\">\n      <strong>Warm regards,</strong><br>\n      Your Team\n    </p>\n  </div>\n  \n  <div style=\"background-color: #333; color: #999; padding: 20px; text-align: center; font-size: 12px;\">\n    <p>Questions? Reply to this email or contact our VIP support line.</p>\n  </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1472,
+        352
+      ],
+      "id": "585999ee-efe3-4f71-9d37-7abc11cc17cd",
+      "name": "Send VIP Email",
+      "webhookId": "8feccd6a-d901-4bdd-b0d0-b01675add518",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "dNdC9dt0sd3OjzvS",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{$json.email}}",
+        "subject": "=Thank you for your order, {{$json.name}}! 🎉",
+        "message": "=<html>\n<body style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto;\">\n  <div style=\"background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%); padding: 30px; text-align: center;\">\n    <h1 style=\"color: white; margin: 0;\">Thank You! 🎉</h1>\n  </div>\n  \n  <div style=\"padding: 30px; background-color: #f9f9f9;\">\n    <h2 style=\"color: #00b09b;\">Hi {{$json.name}},</h2>\n    \n    <p>Thank you for your recent purchase with us! We truly appreciate your business.</p>\n    \n    <div style=\"background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\">\n      <h3 style=\"color: #00b09b; margin-top: 0;\">Your Purchase Summary 📦</h3>\n      <table style=\"width: 100%;\">\n        <tr>\n          <td style=\"padding: 10px;\"><strong>Total Orders:</strong></td>\n          <td style=\"padding: 10px; text-align: right;\">{{$json.totalOrders}}</td>\n        </tr>\n        <tr>\n          <td style=\"padding: 10px;\"><strong>Total Spent:</strong></td>\n          <td style=\"padding: 10px; text-align: right; color: #00b09b; font-weight: bold;\">${{$json.totalSpent.toFixed(2)}}</td>\n        </tr>\n      </table>\n    </div>\n    \n    <p>We hope you're enjoying your products! If you have any questions or feedback, we'd love to hear from you.</p>\n    \n    <div style=\"background-color: #d4edda; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745; text-align: center;\">\n      <h3 style=\"margin-top: 0; color: #155724;\">🎁 Special Offer Just for You!</h3>\n      <p style=\"margin: 10px 0;\">Use this code on your next purchase:</p>\n      <div style=\"background-color: white; padding: 15px; border-radius: 5px; font-size: 20px; font-weight: bold; color: #28a745; letter-spacing: 2px;\">\n        THANKYOU10\n      </div>\n      <p style=\"margin: 10px 0 0 0; font-size: 14px; color: #155724;\">Save 10% on your next order!</p>\n    </div>\n    \n    <p style=\"margin-top: 30px;\">\n      <strong>Best regards,</strong><br>\n      Your Team\n    </p>\n  </div>\n  \n  <div style=\"background-color: #333; color: #999; padding: 20px; text-align: center; font-size: 12px;\">\n    <p>Need help? Reply to this email or visit our support center.</p>\n  </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1472,
+        576
+      ],
+      "id": "40c0e2a5-ef10-4b28-9a18-9905e41314bf",
+      "name": "Send Standard Email",
+      "webhookId": "1e84d9ea-67de-4e5f-850d-181fc02efbc4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "dNdC9dt0sd3OjzvS",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1j316kl117GsLbGK4KfW6X77CHMfTCtk3RuzsJn2aNOM",
+          "mode": "list",
+          "cachedResultName": "3. Woocomerse high value customers",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1j316kl117GsLbGK4KfW6X77CHMfTCtk3RuzsJn2aNOM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "3. Woocomerse high value customers",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1j316kl117GsLbGK4KfW6X77CHMfTCtk3RuzsJn2aNOM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{$now.toFormat('yyyy-MM-dd HH:mm')}}",
+            "Customer ID": "={{$json.customerId}}",
+            "Customer Email": "={{$json.email}}",
+            "Customer Name": "={{$json.name}}",
+            "Tier": "={{$json.tier}}",
+            "Total Orders": "={{$json.totalOrders}}",
+            "Total Spent": "={{$json.totalSpent}}",
+            "Avg Order Value": "={{$json.avgOrderValue}}",
+            "Last Order Date": "={{$json.lastOrderDate}}",
+            "Days Since Last Order": "={{$json.daysSinceLastOrder}}",
+            "Unique Products": "={{$json.uniqueProducts}}",
+            "Email Sent": "Yes"
+          },
+          "matchingColumns": [
+            "Customer Email"
+          ],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer ID",
+              "displayName": "Customer ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Email",
+              "displayName": "Customer Email",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Tier",
+              "displayName": "Tier",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Orders",
+              "displayName": "Total Orders",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Spent",
+              "displayName": "Total Spent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Avg Order Value",
+              "displayName": "Avg Order Value",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Order Date",
+              "displayName": "Last Order Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Days Since Last Order",
+              "displayName": "Days Since Last Order",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Unique Products",
+              "displayName": "Unique Products",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Sent",
+              "displayName": "Email Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1760,
+        496
+      ],
+      "id": "3ca17ae0-b5c2-4521-b52f-22a7258e750b",
+      "name": "Log to Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ZKEuSXNi8Hoc2dz7",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate all customer data for summary\nconst allCustomers = $input.all();\n\nlet vipCount = 0;\nlet premiumCount = 0;\nlet standardCount = 0;\nlet totalRevenue = 0;\nlet totalOrders = 0;\n\nallCustomers.forEach(item => {\n  const customer = item.json;\n  \n  if (customer.tier === 'VIP') vipCount++;\n  else if (customer.tier === 'Premium') premiumCount++;\n  else standardCount++;\n  \n  totalRevenue += parseFloat(customer.totalSpent);\n  totalOrders += customer.totalOrders;\n});\n\nconst avgOrderValue = totalOrders > 0 ? (totalRevenue / totalOrders).toFixed(2) : 0;\n\nreturn [{\n  json: {\n    totalCustomers: allCustomers.length,\n    vipCount: vipCount,\n    premiumCount: premiumCount,\n    standardCount: standardCount,\n    emailsSent: allCustomers.length,\n    avgOrderValue: avgOrderValue,\n    totalRevenue: totalRevenue.toFixed(2),\n    runDate: new Date().toISOString().split('T')[0]\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        496
+      ],
+      "id": "50cb41f2-88b0-4a68-a624-9244efacd89e",
+      "name": "Create Summary Stats"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C07JY2SGXG9",
+          "mode": "id"
+        },
+        "text": "=📊 *WooCommerce Customer Insights Summary*\n\n*Run Date:* {{$json.runDate}}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n*📈 Today's Results*\n\n• Total Customers Processed: *{{$json.totalCustomers}}*\n• 💎 VIP Customers: *{{$json.vipCount}}*\n• ⭐ Premium Customers: *{{$json.premiumCount}}*\n• 🟢 Standard Customers: *{{$json.standardCount}}*\n• ✉️ Emails Sent: *{{$json.emailsSent}}*\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n*💰 Financial Insights (Last 30 Days)*\n\n• Average Order Value: *${{$json.avgOrderValue}}*\n• Total Revenue: *${{$json.totalRevenue}}*\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n✅ Workflow completed successfully!",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        2240,
+        496
+      ],
+      "id": "26d16b67-d140-4507-be4c-804520931965",
+      "name": "Send Slack Summary",
+      "webhookId": "02947633-363e-4989-ac57-4351f462d9a4",
+      "credentials": {
+        "slackApi": {
+          "id": "LmmEoyH6yMjYZeFV",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        400,
+        608
+      ],
+      "id": "8a5586db-85b9-457c-a3ea-e400fcb0d702",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        864,
+        480
+      ],
+      "id": "47c97c58-8a53-4e4e-8cd1-072a9952caa1",
+      "name": "Merge"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger (Daily 9 AM)": {
+      "main": [
+        [
+          {
+            "node": "Get All Products",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get All Customers",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Orders (Last 30 Days)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Orders (Last 30 Days)": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Customers": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get All Products": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Analyze Customer Data": {
+      "main": [
+        [
+          {
+            "node": "Check Customer Tier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Customer Tier": {
+      "main": [
+        [
+          {
+            "node": "Send VIP Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Standard Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send VIP Email": {
+      "main": [
+        [
+          {
+            "node": "Log to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Standard Email": {
+      "main": [
+        [
+          {
+            "node": "Log to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Create Summary Stats",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Summary Stats": {
+      "main": [
+        [
+          {
+            "node": "Send Slack Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get Orders (Last 30 Days)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get All Customers",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get All Products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Analyze Customer Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "68be5039-ac5c-4197-962a-579a7f165681",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "96add2e303f72aa16a39eea436903593869549c40bd26622ad76490ad225eb9e"
+  },
+  "id": "kHP7QQ8srl7fSBMp",
+  "tags": []
+}
