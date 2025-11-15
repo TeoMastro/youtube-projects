@@ -96,7 +96,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Get data from all input connections\nconst allInputs = $input.all();\n\n// Separate the three inputs\nconst orders = allInputs[0].json;\nconst customers = allInputs[1].json; \nconst products = allInputs[2].json;\n\n// Make sure orders is an array\nconst orderArray = Array.isArray(orders) ? orders : [orders];\n\nconsole.log(`Processing ${orderArray.length} orders`);\n\n// Create a map of customer spending\nconst customerData = {};\n\n// Process all orders\norderArray.forEach(order => {\n  const customerId = order.customer_id;\n  \n  // Skip guest orders (customer_id = 0)\n  if (!customerId || customerId === 0) return;\n  \n  if (!customerData[customerId]) {\n    customerData[customerId] = {\n      customerId: customerId,\n      email: order.billing.email,\n      name: `${order.billing.first_name} ${order.billing.last_name}`,\n      totalOrders: 0,\n      totalSpent: 0,\n      lastOrderDate: order.date_created,\n      products: [],\n      orderIds: []\n    };\n  }\n  \n  customerData[customerId].totalOrders += 1;\n  customerData[customerId].totalSpent += parseFloat(order.total);\n  customerData[customerId].orderIds.push(order.id);\n  \n  // Track products purchased\n  if (order.line_items && Array.isArray(order.line_items)) {\n    order.line_items.forEach(item => {\n      customerData[customerId].products.push({\n        name: item.name,\n        quantity: item.quantity,\n        total: item.total\n      });\n    });\n  }\n  \n  // Update last order date if more recent\n  if (new Date(order.date_created) > new Date(customerData[customerId].lastOrderDate)) {\n    customerData[customerId].lastOrderDate = order.date_created;\n  }\n});\n\n// Determine customer tier\nconst enrichedCustomers = Object.values(customerData).map(customer => {\n  let tier = 'Standard';\n  let tierEmoji = '🟢';\n  \n  if (customer.totalSpent > 1000) {\n    tier = 'VIP';\n    tierEmoji = '💎';\n  } else if (customer.totalSpent > 500) {\n    tier = 'Premium';\n    tierEmoji = '⭐';\n  }\n  \n  return {\n    ...customer,\n    tier: tier,\n    tierEmoji: tierEmoji,\n    avgOrderValue: (customer.totalSpent / customer.totalOrders).toFixed(2),\n    uniqueProducts: [...new Set(customer.products.map(p => p.name))].length,\n    productList: [...new Set(customer.products.map(p => p.name))].join(', '),\n    daysSinceLastOrder: Math.floor((new Date() - new Date(customer.lastOrderDate)) / (1000 * 60 * 60 * 24))\n  };\n});\n\n// Sort by total spent (highest first)\nenrichedCustomers.sort((a, b) => b.totalSpent - a.totalSpent);\n\nconsole.log(`Found ${enrichedCustomers.length} customers`);\n\nreturn enrichedCustomers.map(customer => ({ json: customer }));"
+        "jsCode": "// Get data from all input connections\nconst allInputs = $input.all();\n\n// Separate the three inputs\nconst orders = allInputs[0].json;\nconst customers = allInputs[1].json; \nconst products = allInputs[2].json;\n\n// Make sure orders is an array\nconst orderArray = Array.isArray(orders) ? orders : [orders];\n\nconsole.log(`Processing ${orderArray.length} orders`);\n\n// Create a map of customer spending\nconst customerData = {};\n\n// Process all orders\norderArray.forEach(order => {\n  const customerId = order.customer_id;\n  \n  // Skip guest orders (customer_id = 0)\n  if (!customerId || customerId === 0) return;\n  \n  if (!customerData[customerId]) {\n    customerData[customerId] = {\n      customerId: customerId,\n      email: order.billing.email,\n      name: `${order.billing.first_name} ${order.billing.last_name}`,\n      totalOrders: 0,\n      totalSpent: 0,\n      lastOrderDate: order.date_created,\n      products: [],\n      orderIds: []\n    };\n  }\n  \n  customerData[customerId].totalOrders += 1;\n  customerData[customerId].totalSpent += parseFloat(order.total);\n  customerData[customerId].orderIds.push(order.id);\n  \n  // Track products purchased\n  if (order.line_items && Array.isArray(order.line_items)) {\n    order.line_items.forEach(item => {\n      customerData[customerId].products.push({\n        name: item.name,\n        quantity: item.quantity,\n        total: item.total\n      });\n    });\n  }\n  \n  // Update last order date if more recent\n  if (new Date(order.date_created) > new Date(customerData[customerId].lastOrderDate)) {\n    customerData[customerId].lastOrderDate = order.date_created;\n  }\n});\n\n// Determine customer tier\nconst enrichedCustomers = Object.values(customerData).map(customer => {\n  let tier = 'Standard';\n  let tierEmoji = '🟢';\n  \n  if (customer.totalSpent > 100) {\n    tier = 'VIP';\n    tierEmoji = '💎';\n  } else if (customer.totalSpent > 50) {\n    tier = 'Premium';\n    tierEmoji = '⭐';\n  }\n  \n  return {\n    ...customer,\n    tier: tier,\n    tierEmoji: tierEmoji,\n    avgOrderValue: (customer.totalSpent / customer.totalOrders).toFixed(2),\n    uniqueProducts: [...new Set(customer.products.map(p => p.name))].length,\n    productList: [...new Set(customer.products.map(p => p.name))].join(', '),\n    daysSinceLastOrder: Math.floor((new Date() - new Date(customer.lastOrderDate)) / (1000 * 60 * 60 * 24))\n  };\n});\n\n// Sort by total spent (highest first)\nenrichedCustomers.sort((a, b) => b.totalSpent - a.totalSpent);\n\nconsole.log(`Found ${enrichedCustomers.length} customers`);\n\nreturn enrichedCustomers.map(customer => ({ json: customer }));"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -113,7 +113,8 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "strict",
+            "version": 2
           },
           "conditions": [
             {
@@ -149,7 +150,7 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        1472,
+        1536,
         352
       ],
       "id": "585999ee-efe3-4f71-9d37-7abc11cc17cd",
@@ -172,8 +173,8 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        1472,
-        576
+        1504,
+        624
       ],
       "id": "40c0e2a5-ef10-4b28-9a18-9905e41314bf",
       "name": "Send Standard Email",
@@ -184,6 +185,70 @@
           "name": "Gmail account"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate all customer data for summary\nconst allCustomers = $input.all();\n\nlet vipCount = 0;\nlet premiumCount = 0;\nlet standardCount = 0;\nlet totalRevenue = 0;\nlet totalOrders = 0;\n\nallCustomers.forEach(item => {\n  const customer = item.json;\n  \n  if (customer.tier === 'VIP') vipCount++;\n  else if (customer.tier === 'Premium') premiumCount++;\n  else standardCount++;\n  \n  totalRevenue += parseFloat(customer.totalSpent);\n  totalOrders += customer.totalOrders;\n});\n\nconst avgOrderValue = totalOrders > 0 ? (totalRevenue / totalOrders).toFixed(2) : 0;\n\nreturn [{\n  json: {\n    totalCustomers: allCustomers.length,\n    vipCount: vipCount,\n    premiumCount: premiumCount,\n    standardCount: standardCount,\n    emailsSent: allCustomers.length,\n    avgOrderValue: avgOrderValue,\n    totalRevenue: totalRevenue.toFixed(2),\n    runDate: new Date().toISOString().split('T')[0]\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        480
+      ],
+      "id": "50cb41f2-88b0-4a68-a624-9244efacd89e",
+      "name": "Create Summary Stats"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C07JY2SGXG9",
+          "mode": "id"
+        },
+        "text": "=📊 *WooCommerce Customer Insights Summary*\n\n*Run Date:* {{$json.runDate}}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n*📈 Today's Results*\n\n• Total Customers Processed: *{{$json.totalCustomers}}*\n• 💎 VIP Customers: *{{$json.vipCount}}*\n• ⭐ Premium Customers: *{{$json.premiumCount}}*\n• 🟢 Standard Customers: *{{$json.standardCount}}*\n• ✉️ Emails Sent: *{{$json.emailsSent}}*\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n*💰 Financial Insights (Last 30 Days)*\n\n• Average Order Value: *${{$json.avgOrderValue}}*\n• Total Revenue: *${{$json.totalRevenue}}*\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n✅ Workflow completed successfully!",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        2032,
+        480
+      ],
+      "id": "26d16b67-d140-4507-be4c-804520931965",
+      "name": "Send Slack Summary",
+      "webhookId": "02947633-363e-4989-ac57-4351f462d9a4",
+      "credentials": {
+        "slackApi": {
+          "id": "LmmEoyH6yMjYZeFV",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        400,
+        608
+      ],
+      "id": "8a5586db-85b9-457c-a3ea-e400fcb0d702",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        864,
+        480
+      ],
+      "id": "47c97c58-8a53-4e4e-8cd1-072a9952caa1",
+      "name": "Merge"
     },
     {
       "parameters": {
@@ -203,7 +268,7 @@
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1j316kl117GsLbGK4KfW6X77CHMfTCtk3RuzsJn2aNOM/edit#gid=0"
         },
         "columns": {
-          "mappingMode": "defineBelow",
+          "mappingMode": "autoMapInputData",
           "value": {
             "Date": "={{$now.toFormat('yyyy-MM-dd HH:mm')}}",
             "Customer ID": "={{$json.customerId}}",
@@ -244,7 +309,7 @@
               "id": "Customer Email",
               "displayName": "Customer Email",
               "required": false,
-              "defaultMatch": true,
+              "defaultMatch": false,
               "display": true,
               "type": "string",
               "canBeUsedToMatch": true
@@ -329,16 +394,48 @@
               "display": true,
               "type": "string",
               "canBeUsedToMatch": true
+            },
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "threadId",
+              "displayName": "threadId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "labelIds",
+              "displayName": "labelIds",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
             }
-          ]
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         },
         "options": {}
       },
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        1760,
-        496
+        1312,
+        240
       ],
       "id": "3ca17ae0-b5c2-4521-b52f-22a7258e750b",
       "name": "Log to Google Sheets",
@@ -348,70 +445,6 @@
           "name": "Google Sheets account"
         }
       }
-    },
-    {
-      "parameters": {
-        "jsCode": "// Aggregate all customer data for summary\nconst allCustomers = $input.all();\n\nlet vipCount = 0;\nlet premiumCount = 0;\nlet standardCount = 0;\nlet totalRevenue = 0;\nlet totalOrders = 0;\n\nallCustomers.forEach(item => {\n  const customer = item.json;\n  \n  if (customer.tier === 'VIP') vipCount++;\n  else if (customer.tier === 'Premium') premiumCount++;\n  else standardCount++;\n  \n  totalRevenue += parseFloat(customer.totalSpent);\n  totalOrders += customer.totalOrders;\n});\n\nconst avgOrderValue = totalOrders > 0 ? (totalRevenue / totalOrders).toFixed(2) : 0;\n\nreturn [{\n  json: {\n    totalCustomers: allCustomers.length,\n    vipCount: vipCount,\n    premiumCount: premiumCount,\n    standardCount: standardCount,\n    emailsSent: allCustomers.length,\n    avgOrderValue: avgOrderValue,\n    totalRevenue: totalRevenue.toFixed(2),\n    runDate: new Date().toISOString().split('T')[0]\n  }\n}];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        2000,
-        496
-      ],
-      "id": "50cb41f2-88b0-4a68-a624-9244efacd89e",
-      "name": "Create Summary Stats"
-    },
-    {
-      "parameters": {
-        "select": "channel",
-        "channelId": {
-          "__rl": true,
-          "value": "C07JY2SGXG9",
-          "mode": "id"
-        },
-        "text": "=📊 *WooCommerce Customer Insights Summary*\n\n*Run Date:* {{$json.runDate}}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n*📈 Today's Results*\n\n• Total Customers Processed: *{{$json.totalCustomers}}*\n• 💎 VIP Customers: *{{$json.vipCount}}*\n• ⭐ Premium Customers: *{{$json.premiumCount}}*\n• 🟢 Standard Customers: *{{$json.standardCount}}*\n• ✉️ Emails Sent: *{{$json.emailsSent}}*\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n*💰 Financial Insights (Last 30 Days)*\n\n• Average Order Value: *${{$json.avgOrderValue}}*\n• Total Revenue: *${{$json.totalRevenue}}*\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n✅ Workflow completed successfully!",
-        "otherOptions": {}
-      },
-      "type": "n8n-nodes-base.slack",
-      "typeVersion": 2.2,
-      "position": [
-        2240,
-        496
-      ],
-      "id": "26d16b67-d140-4507-be4c-804520931965",
-      "name": "Send Slack Summary",
-      "webhookId": "02947633-363e-4989-ac57-4351f462d9a4",
-      "credentials": {
-        "slackApi": {
-          "id": "LmmEoyH6yMjYZeFV",
-          "name": "Slack account"
-        }
-      }
-    },
-    {
-      "parameters": {},
-      "type": "n8n-nodes-base.manualTrigger",
-      "typeVersion": 1,
-      "position": [
-        400,
-        608
-      ],
-      "id": "8a5586db-85b9-457c-a3ea-e400fcb0d702",
-      "name": "When clicking ‘Execute workflow’"
-    },
-    {
-      "parameters": {
-        "numberInputs": 3
-      },
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3.2,
-      "position": [
-        864,
-        480
-      ],
-      "id": "47c97c58-8a53-4e4e-8cd1-072a9952caa1",
-      "name": "Merge"
     }
   ],
   "pinData": {},
@@ -420,7 +453,7 @@
       "main": [
         [
           {
-            "node": "Get All Products",
+            "node": "Get Orders (Last 30 Days)",
             "type": "main",
             "index": 0
           },
@@ -430,7 +463,7 @@
             "index": 0
           },
           {
-            "node": "Get Orders (Last 30 Days)",
+            "node": "Get All Products",
             "type": "main",
             "index": 0
           }
@@ -444,28 +477,6 @@
             "node": "Merge",
             "type": "main",
             "index": 0
-          }
-        ]
-      ]
-    },
-    "Get All Customers": {
-      "main": [
-        [
-          {
-            "node": "Merge",
-            "type": "main",
-            "index": 1
-          }
-        ]
-      ]
-    },
-    "Get All Products": {
-      "main": [
-        [
-          {
-            "node": "Merge",
-            "type": "main",
-            "index": 2
           }
         ]
       ]
@@ -488,6 +499,16 @@
             "node": "Send VIP Email",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Log to Google Sheets",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create Summary Stats",
+            "type": "main",
+            "index": 0
           }
         ],
         [
@@ -501,35 +522,12 @@
     },
     "Send VIP Email": {
       "main": [
-        [
-          {
-            "node": "Log to Google Sheets",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Send Standard Email": {
       "main": [
-        [
-          {
-            "node": "Log to Google Sheets",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Log to Google Sheets": {
-      "main": [
-        [
-          {
-            "node": "Create Summary Stats",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Create Summary Stats": {
@@ -564,6 +562,28 @@
         ]
       ]
     },
+    "Get All Customers": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get All Products": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
     "Merge": {
       "main": [
         [
@@ -580,7 +600,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "68be5039-ac5c-4197-962a-579a7f165681",
+  "versionId": "96dae113-c8e0-49e4-b579-4c65f11c1af4",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "96add2e303f72aa16a39eea436903593869549c40bd26622ad76490ad225eb9e"

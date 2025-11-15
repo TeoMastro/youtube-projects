@@ -1,0 +1,604 @@
+{
+  "name": "4. Serp api - dentists in thessaloniki leads finder",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// Get the AI extraction result\nconst extractionResult = $input.first().json;\n\n// Get the original URL and title from the loop\nconst sourceUrl = $('Loop Over Items1').item.json.link;\nconst pageTitle = $('Loop Over Items1').item.json.title;\n\n// Recursive function to find the dentists array anywhere in the structure\nfunction findDentists(obj, depth = 0) {\n  // Prevent infinite recursion\n  if (depth > 10) return null;\n  \n  // If it's null or undefined, return null\n  if (obj == null) return null;\n  \n  // If it's a string, try to parse it as JSON\n  if (typeof obj === 'string') {\n    try {\n      return findDentists(JSON.parse(obj), depth + 1);\n    } catch {\n      return null;\n    }\n  }\n  \n  // If it's an array, check if it looks like dentists\n  if (Array.isArray(obj)) {\n    // Check if first item has dentist-like properties\n    if (obj.length > 0 && obj[0] && typeof obj[0] === 'object' && \n        ('name' in obj[0] || 'email' in obj[0] || 'phone' in obj[0])) {\n      return obj;\n    }\n    // Otherwise search within array items\n    for (const item of obj) {\n      const found = findDentists(item, depth + 1);\n      if (found) return found;\n    }\n    return null;\n  }\n  \n  // If it's an object, search for 'dentists' key or search recursively\n  if (typeof obj === 'object') {\n    // Direct dentists key\n    if ('dentists' in obj && Array.isArray(obj.dentists)) {\n      return obj.dentists;\n    }\n    \n    // Search all keys recursively\n    for (const key in obj) {\n      const found = findDentists(obj[key], depth + 1);\n      if (found) return found;\n    }\n  }\n  \n  return null;\n}\n\n// Find dentists array\nconst dentists = findDentists(extractionResult);\n\n// If no dentists found, return empty\nif (!dentists || dentists.length === 0) {\n  return [];\n}\n\n// Convert each dentist to a separate item\nconst output = dentists.map(dentist => {\n  return {\n    json: {\n      name: dentist.name || 'N/A',\n      email: dentist.email || 'N/A',\n      phone: dentist.phone || 'N/A',\n      address: dentist.address || 'N/A',\n      sourceUrl: sourceUrl,\n      pageTitle: pageTitle\n    }\n  };\n});\n\nreturn output;"
+      },
+      "id": "ba0ab6ae-1845-40c2-bec9-2f8c496e9619",
+      "name": "Split Dentists Array",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        128,
+        688
+      ],
+      "typeVersion": 2,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {},
+      "id": "fc2618b7-dc2f-4388-a11e-db21ed2c0e9c",
+      "name": "Merge with Blocked Sites List",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        -976,
+        672
+      ],
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1iXmfPNFCNLz0Lu11fosbTvWmPuVh4BFqmNbUZhydIdY",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Φύλλο1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iXmfPNFCNLz0Lu11fosbTvWmPuVh4BFqmNbUZhydIdY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.name }}",
+            "Email": "={{ $json.email }}",
+            "Phone": "={{ $json.phone }}",
+            "Address": "={{ $json.address }}",
+            "Source_Website": "={{ $json.sourceUrl }}",
+            "Page_Title": "={{ $json.pageTitle }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Address",
+              "displayName": "Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Source_Website",
+              "displayName": "Source_Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Page_Title",
+              "displayName": "Page_Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "3d49bf8b-35c2-4fac-95cc-00d0b5332910",
+      "name": "Save to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        304,
+        688
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ZKEuSXNi8Hoc2dz7",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the blocked sites list from the first input (Configure Blocked Sites node)\nconst blockedSitesItem = $input.first();\nconst blockedSites = blockedSitesItem.json.blockedSites || [];\n\n// Get all URL items from the second input (Append Results node)\nconst urlItems = $input.all();\n\n// Filter out URLs that contain any of the blocked domains\nconst filteredItems = urlItems.filter(item => {\n  const link = item.json.link || '';\n  const shouldKeep = !blockedSites.some(blocked => link.toLowerCase().includes(blocked.toLowerCase()));\n  return shouldKeep;\n});\n\nreturn filteredItems;"
+      },
+      "id": "31f3d013-5ebd-4b05-8edf-78a553748885",
+      "name": "Filter Blocked Sites",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -784,
+        672
+      ],
+      "typeVersion": 2,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "blocked-sites-list",
+              "name": "blockedSites",
+              "type": "array",
+              "value": "=[\n  \"xo\",\n  \"instagram\",\n  \"facebook\",\n  \"youtube\",\n  \"yelp\",\n  \"tiktok\",\n  \"linkedin\",\n  \"twitter\",\n  \"pinterest\",\n  \"reddit\"\n]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a4330563-1bb5-4f4a-bfc7-7a9403905bae",
+      "name": "Configure Blocked Sites",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        -1488,
+        400
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expert at extracting dentist contact information from Greek websites.\n\nCRITICAL INSTRUCTIONS:\n1. Find ALL dentists on this page - even if there are 20+\n2. Phone numbers are MANDATORY - search everywhere for them:\n   - Look for: \"Τηλ:\", \"Τηλέφωνο:\", \"Tel:\", \"Phone:\", \"Mob:\", \"Κινητό:\", \"Contact:\", \"Ραντεβού:\"\n   - Check headers, footers, contact sections, appointment sections, and even image text\n   - Greek format: 2310 123456 or 231 0123456 or +30 2310123456\n   - Mobile: 69X XXXXXXX or +30 69XXXXXXXX\n   - Try multiple patterns: with/without spaces, with/without country code\n3. For email: Look for @ symbol, \"Email:\", \"e-mail:\", \"info@\", \"contact@\", \"appointment@\"\n4. For address: Look for street names, postal codes, city names, clinic addresses\n5. For name: Look for \"Dr.\", \"Δρ.\", dentist names, clinic names, practice names\n\nSEARCH STRATEGY:\n- Scan the ENTIRE page text thoroughly\n- Numbers near words like \"επικοινωνία\", \"τηλέφωνο\", \"κλήση\", \"ραντεβού\" are likely phones\n- If you see a 10-digit number starting with 2 or 6, it's probably a phone\n- Dentist listings may include specializations (orthodontist, periodontist, etc.) - extract all\n- Don't give up - phones are almost always there somewhere\n\nOUTPUT FORMAT:\nReturn JSON with \"dentists\" array. Each dentist MUST have:\n- name: Dentist name, clinic name, or practice name (required)\n- email: Email address or null\n- phone: Phone number or null (but try VERY hard to find it!)\n- address: Physical address or null\n\nIf NO dentists found at all, return: {\"dentists\": []}"
+        }
+      },
+      "id": "f02ce8ab-ff8a-436d-abce-c611c1d4bc1f",
+      "name": "Extract All Dentists",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        -176,
+        688
+      ],
+      "typeVersion": 2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.apify.com/v2/acts/6sigmag~fast-website-content-crawler/run-sync-get-dataset-items\n",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"startUrls\": [\n        \"{{ $json.link }}\"\n    ]\n}",
+        "options": {}
+      },
+      "id": "0bad0d5a-5a15-4db0-97ce-2478ac29e8ce",
+      "name": "Scrape URL with apify",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -384,
+        688
+      ],
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "ksdwxg5JDsoHsUBy",
+          "name": "apify"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {},
+      "id": "26ee34d8-438d-40bf-aa81-b2e860c76a29",
+      "name": "Append Results",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        -1168,
+        672
+      ],
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get JSON input\nconst data = $input.first().json;\n\n// Extract organic results\nconst results = data.organic_results || [];\n\nconst output = results.map(result => {\n  return {\n    json: {\n      title: result.title || \"\",\n      link: result.link || \"\",\n      displayed_link: result.displayed_link || \"\"\n    }\n  };\n});\n\nreturn output;\n"
+      },
+      "id": "be64b582-98e9-4c70-b879-53b4ccd10e9b",
+      "name": "Extract Url 2",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -1376,
+        784
+      ],
+      "typeVersion": 2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get JSON input\nconst data = $input.first().json;\n\n// Extract organic results\nconst results = data.organic_results || [];\n\nconst output = results.map(result => {\n  return {\n    json: {\n      title: result.title || \"\",\n      link: result.link || \"\",\n      displayed_link: result.displayed_link || \"\"\n    }\n  };\n});\n\nreturn output;\n"
+      },
+      "id": "9d20aff8-2769-4f18-8348-9bb7d8e71816",
+      "name": "Extract Url",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -1376,
+        576
+      ],
+      "typeVersion": 2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "q": "={{ $json.Topic }}",
+        "additionalFields": {
+          "start": "10"
+        },
+        "requestOptions": {}
+      },
+      "id": "dff8699a-9942-4a57-89c2-3316ed1a5b1c",
+      "name": "Search Google (11-20)",
+      "type": "n8n-nodes-serpapi.serpApi",
+      "position": [
+        -1600,
+        784
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "serpApi": {
+          "id": "DP0QHbxDIpG3jVVu",
+          "name": "SerpApi account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "q": "={{ $json.Topic }}",
+        "additionalFields": {},
+        "requestOptions": {}
+      },
+      "id": "fe4ecd41-e449-4313-8ae9-beb3ac4d1660",
+      "name": "Search Google (top 10)",
+      "type": "n8n-nodes-serpapi.serpApi",
+      "position": [
+        -1584,
+        560
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "serpApi": {
+          "id": "DP0QHbxDIpG3jVVu",
+          "name": "SerpApi account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "04f4cbfd-8d9c-4b12-aed0-ec8cea84944d",
+              "name": "Topic",
+              "type": "string",
+              "value": "dentist in thessaloniki"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "89dabc48-bf46-4aaa-a12f-52922c9b91ee",
+      "name": "Set Topic",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        -2032,
+        688
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {},
+      "id": "5ac6ca09-b1d9-4bd6-ac4a-b4f8742c41a2",
+      "name": "Run Workflow",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        -2272,
+        672
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "ccd64d12-2db0-401c-a2b6-85442c744d26",
+      "name": "Loop Over Items1",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [
+        -608,
+        672
+      ],
+      "typeVersion": 3,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"dentists\": [\n    {\n      \"name\": \"string\",\n      \"email\": \"string or null\",\n      \"phone\": \"string or null\",\n      \"address\": \"string or null\"\n    }\n  ]\n}"
+      },
+      "id": "1bbf092e-ad2c-4e3d-aec0-7267c5c515e2",
+      "name": "Structured Output Parser2",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "position": [
+        -48,
+        848
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "id": "cd1bddd0-ccef-43f6-bbb0-bcff043ec3b4",
+      "name": "OpenAI Chat Model3",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        -192,
+        848
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "openAiApi": {
+          "id": "DQX28WREINIoUWoo",
+          "name": "Teo openai"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Split Dentists Array": {
+      "main": [
+        [
+          {
+            "node": "Save to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge with Blocked Sites List": {
+      "main": [
+        [
+          {
+            "node": "Filter Blocked Sites",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configure Blocked Sites": {
+      "main": [
+        [
+          {
+            "node": "Merge with Blocked Sites List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract All Dentists": {
+      "main": [
+        [
+          {
+            "node": "Split Dentists Array",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape URL with apify": {
+      "main": [
+        [
+          {
+            "node": "Extract All Dentists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Results": {
+      "main": [
+        [
+          {
+            "node": "Merge with Blocked Sites List",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Extract Url 2": {
+      "main": [
+        [
+          {
+            "node": "Append Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Extract Url": {
+      "main": [
+        [
+          {
+            "node": "Append Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Google (11-20)": {
+      "main": [
+        [
+          {
+            "node": "Extract Url 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Google (top 10)": {
+      "main": [
+        [
+          {
+            "node": "Extract Url",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Topic": {
+      "main": [
+        [
+          {
+            "node": "Configure Blocked Sites",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Search Google (11-20)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Search Google (top 10)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Workflow": {
+      "main": [
+        [
+          {
+            "node": "Set Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Scrape URL with apify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Blocked Sites": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Extract All Dentists",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Extract All Dentists",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "e572531c-fdc4-4c47-b651-c7bf435372d5",
+  "meta": {
+    "templateId": "7155",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "96add2e303f72aa16a39eea436903593869549c40bd26622ad76490ad225eb9e"
+  },
+  "id": "9K4ovdwsul5PjOD4",
+  "tags": []
+}
