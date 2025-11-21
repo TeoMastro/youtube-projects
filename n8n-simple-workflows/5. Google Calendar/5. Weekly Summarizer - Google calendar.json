@@ -1,0 +1,600 @@
+{
+  "name": "5. Weekly Summarizer - Google calendar",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtHour": 12
+            }
+          ]
+        }
+      },
+      "id": "fa2167db-2044-4898-b53b-fb9eacf3d7b7",
+      "name": "weekly_schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        -896,
+        1152
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "teomastro1999@gmail.com",
+          "mode": "list",
+          "cachedResultName": "teomastro1999@gmail.com"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $json['users-current-day-1-minute-before-midnight-iso'] }}",
+        "timeMax": "={{ $json['users-current-day-1-minute-before-midnight-plus-7-days-iso'] }}",
+        "options": {}
+      },
+      "id": "d2d6e1b9-13c1-4cd3-ad7b-a55d10b7c892",
+      "name": "get_next_weeks_events",
+      "type": "n8n-nodes-base.googleCalendar",
+      "position": [
+        592,
+        1152
+      ],
+      "typeVersion": 1.3,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "ilF4WKKHVd67Oi8v",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.eventdata }}",
+        "options": {
+          "systemMessage": "=You have been given a JSON array of Google Calendar events for the upcoming week (Monday to Sunday). Today is Sunday, {{ $('locale').item.json['users-current-date'] ? $('locale').item.json['users-current-date'] : $now.setZone($('locale').item.json['users-timezone'] ?? 'Europe/Athens').setLocale($('locale').item.json['users-locale'] ?? 'el-GR').toLocaleString({ weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) }}.\nEach event object in the array has 'summary', 'start.dateTime', 'end.dateTime', and 'description'. Your designated timezone is '{{ $('locale').item.json['users-timezone'] }}' and locale '{{ $('locale').item.json['users-locale'] }}'.\n\nThe users name is: {{ $('locale').item.json['users-name'] }}\nThe user is located in: {{ $('locale').item.json['users-home-city'] }}\n\nYour task is to create a well-formatted weekly schedule summary for an email.\n\n**IMPORTANT: If the input array is empty or contains no events, respond with a friendly message like:** \"Good news! You have no scheduled events for the upcoming week. Enjoy your free time in {{ $('locale').item.json['users-home-city'] }}! 🌟\"\n\n1.  **Greeting**: Start with a friendly greeting, for example: \"Here's your schedule for the upcoming week:\"\n\n2.  **Daily Schedule**:\n    *   Group events by day (e.g., Monday, June 9, 2025; Tuesday, June 10, 2025). Determine the correct dates for the upcoming week (Monday to Sunday) based on today's date.\n    *   For each day of the upcoming week, list its events chronologically.\n    *   Format each event as: `HH:MM AM/PM - HH:MM AM/PM: Event Summary`. For example: `09:30 AM - 10:30 AM: Team Meeting`.\n    *   Parse the `start.dateTime` and `end.dateTime` (which are ISO strings with timezone offsets like `+02:00` or `+03:00`) and display them correctly for the '{{ $('locale').item.json['users-timezone'] }}' timezone.\n    *   If a day has no events, state \"No events scheduled for this day.\"\n\n3.  **Priority Events**:\n    *   Review the 'summary' and 'description' fields for keywords such as \"important\", \"urgent\", \"deadline\", \"meeting\", \"critical\", \"prepare\", or similar terms that indicate significance.\n    *   Mark these priority events by prefixing the event line with \"IMPORTANT: \". For example: `IMPORTANT: 02:00 PM - 03:00 PM: Project Deadline Review`.\n    *   If the 'description' provides actionable context for a priority event (e.g., \"Preparation needed: review X document\"), you can briefly mention this context after the event summary.\n\n4.  **Weekly Insight**:\n    *   Conclude with 1-2 sentences offering a helpful insight, observation, or piece of advice related to the week's schedule. Examples:\n        *   \"Thursday looks like your busiest day, so you might want to plan accordingly.\"\n        *   \"Remember to allocate some time to prepare for the client presentation on Wednesday.\"\n        *   \"This week seems to have a good balance of meetings and free time.\"\n\n5.  **Input Data Structure Reminder**: The calendar events are provided as a JSON array. You need to process this entire array. If it's empty, follow the instruction in the IMPORTANT section above.\n\nPlease generate only the text content suitable for the body of an email. Do not include any preamble (like \"Okay, here is the summary...\") or sign-off beyond the requested content."
+        }
+      },
+      "id": "e5934936-559e-4ce3-818e-e55b79c772f1",
+      "name": "event_summary_agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        2032,
+        1152
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2fa6da62-0c1b-4abe-b1d1-45dab7c22ab0",
+              "name": "users-locale",
+              "type": "string",
+              "value": "el-GR"
+            },
+            {
+              "id": "e997127b-a7b1-4684-82b3-3e5d66be07fa",
+              "name": "users-timezone",
+              "type": "string",
+              "value": "Europe/Athens"
+            },
+            {
+              "id": "082e8d8f-5b20-4fc0-a59e-6deb48cb1406",
+              "name": "users-name",
+              "type": "string",
+              "value": "Θεόδωρος"
+            },
+            {
+              "id": "4a867353-6d0c-4bad-90f9-e739ff1da010",
+              "name": "users-home-city",
+              "type": "string",
+              "value": "Thessaloniki"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "acba9714-4bb2-4fa1-a60f-47fa6e35c75e",
+      "name": "locale",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        -416,
+        1152
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  delete item.json.htmlLink\n  delete item.json.etag\n  delete item.json.iCalUID\n  delete item.json.start.timeZone\n  delete item.json.end.timeZone\n  delete item.json.kind\n  delete item.json.reminders\n  delete item.json.organizer\n  delete item.json.creator\n  delete item.json.created\n  delete item.json.updated\n  delete item.json.status\n  delete item.json.eventType\n  delete item.json.id\n}\n\nreturn $input.all();"
+      },
+      "id": "4a01afbf-bff7-4487-958a-4c09fa1ff961",
+      "name": "simplify_evens_json",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1088,
+        1152
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "eventdata",
+        "options": {}
+      },
+      "id": "cdb2f53f-7666-4e24-af60-6bf7cce1ffcf",
+      "name": "aggregate_events",
+      "type": "n8n-nodes-base.aggregate",
+      "position": [
+        1616,
+        1152
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "### Workflow Overview: Google Calendar Coming Week 🗓️➡️📧\n\nThis n8n workflow automates the process of generating and emailing a summary of your upcoming week's Google Calendar events.\n\n**How it works:**\n1.  **Triggers weekly:** Starts automatically based on a schedule.\n2.  **Sets user context:** Configures your locale, timezone, name, and city.\n3.  **Calculates date ranges:** Determines the start and end dates for the upcoming week.\n4.  **Fetches calendar events:** Retrieves events from your specified Google Calendar for that week.\n5.  **Simplifies data:** Removes unnecessary information from the event data.\n6.  **Aggregates events:** Combines all events into a single list for AI processing.\n7.  **Generates summary:** Uses Google Gemini AI to create a human-readable summary, highlighting important events.\n8.  **Formats for email:** Converts the AI's summary from Markdown to HTML.\n9.  **Sends email:** Emails the formatted summary to you.\n\n**Key User Actions:**\n*   Configure the **`locale`** node with your specific details (timezone, locale, name, city).\n*   Set up credentials for **Google Calendar**, **Google Gemini**, and your **SMTP (Email)** service.\n*   Specify your target Google Calendar ID in the **`get_next_weeks_events`** node.\n*   Update the \"To\" and \"From\" email addresses in the **`send_email`** node.\n\nSource: https://n8n.io/workflows/4783-automated-weekly-google-calendar-summary-via-email-with-ai/",
+        "height": 520,
+        "width": 960,
+        "color": 3
+      },
+      "id": "fce99436-a90f-4a19-9fba-3bcd58a7bb38",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1088,
+        80
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "⚙️ **locale (Set)**\n\n*   **Purpose:** Defines essential user-specific settings for personalization and correct date/time processing.\n*   **‼️ USER ACTION REQUIRED ‼️:**\n    *   `users-locale`: (e.g., `en-AU`, `en-US`, `de-DE`) - Affects date/time/number formatting.\n    *   `users-timezone`: (e.g., `Australia/Sydney`, `America/New_York`) - Crucial for accurate event times.\n    *   `users-name`: (e.g., `Bob`) - Used in the email greeting.\n    *   `users-home-city`: (e.g., `Sydney`) - Provides context for the AI.\n*   **Note:** These values are used by downstream nodes.",
+        "height": 400,
+        "width": 440,
+        "color": 4
+      },
+      "id": "e14aa0ac-ace9-442b-9b02-31c2db065e3b",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -576,
+        784
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "🗓️ **weekly_schedule (Trigger)**\n\n*   **Purpose:** Initiates the workflow automatically.\n*   **Details:** By default, runs once a week at 12:00 PM.\n*   **To Modify:** Adjust the \"Rule\" settings (interval, time, day) if you need a different schedule.",
+        "height": 400,
+        "width": 440,
+        "color": 4
+      },
+      "id": "cc0c2ca4-9d9d-4ea6-9e81-fb0abf802ab4",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1088,
+        784
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "⏰ **date_time (Set)**\n\n*   **Purpose:** Generates various date and time strings based on the current execution time and the settings from the `locale` node.\n*   **Details:** Creates values like \"users-current-date\", \"users-current-day-1-minute-before-midnight-iso\", etc., which are used to define the 7-day window for fetching calendar events.\n*   **To Modify:** Usually no changes needed here; it's dynamic.",
+        "height": 400,
+        "width": 440,
+        "color": 4
+      },
+      "id": "7fbe1a7c-bcf0-4d2f-8fa3-762fa8ad2206",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -80,
+        784
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "📅 **get_next_weeks_events (Google Calendar)**\n\n*   **Purpose:** Fetches events from a specified Google Calendar.\n*   **Details:** Uses `timeMin` and `timeMax` from the `date-time` node to get events for the upcoming 7 days.\n*   **‼️ USER ACTION REQUIRED ‼️:**\n    1.  **Credentials:** Connect your Google Calendar account.\n    2.  **Calendar ID:** Change the `calendar` parameter (currently `c_4d9...group.calendar.google.com`) to *your* desired Google Calendar ID.",
+        "height": 400,
+        "width": 440,
+        "color": 4
+      },
+      "id": "863c6ce2-687c-42b7-81de-37f8eeeefce2",
+      "name": "Sticky Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        432,
+        784
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "954044f7-3c08-48c2-af9c-59a72690ad76",
+              "name": "users-current-date",
+              "type": "string",
+              "value": "={{\n  $now.setZone($('locale').item.json['users-timezone'] ?? 'UTC').setLocale($('locale').item.json['users-locale'] ?? 'en-US').toLocaleString(DateTime.DATE_FULL)\n}}"
+            },
+            {
+              "id": "2c3a0a1a-cc05-4b5d-b175-20732706aefb",
+              "name": "users-current-time",
+              "type": "string",
+              "value": "={{ $now.setZone($('locale').item.json['users-timezone'] ?? 'UTC').setLocale($('locale').item.json['users-locale'] ?? 'en-US').toLocaleString(DateTime.TIME_SIMPLE) }}"
+            },
+            {
+              "id": "764b3b1a-6a6e-4b92-8f41-ae49405bc72a",
+              "name": "users-date-time",
+              "type": "string",
+              "value": "={{ $now.setZone($('locale').item.json['users-timezone']) }}"
+            },
+            {
+              "id": "4c2851ef-175e-4f81-95af-5671171fdf16",
+              "name": "users-date-time-full",
+              "type": "string",
+              "value": "={{ $now.setZone($('locale').item.json['users-timezone'] ?? 'UTC').setLocale($('locale').item.json['users-locale'] ?? 'en-US').toLocaleString(DateTime.DATETIME_FULL) }}"
+            },
+            {
+              "id": "4ae2c38b-f93a-4b56-9078-d9675a12ec8b",
+              "name": "users-date-time-huge",
+              "type": "string",
+              "value": "={{ $now.setZone($('locale').item.json['users-timezone'] ?? 'UTC').setLocale($('locale').item.json['users-locale'] ?? 'en-US').toFormat('cccc, MMMM d, yyyy, h:mm a') }}"
+            },
+            {
+              "id": "1011c2bf-d311-424d-8537-1788597065d4",
+              "name": "users-current-date-plus-1",
+              "type": "string",
+              "value": "={{   $now.plus({ days: 1 }).setZone($('locale').item.json['users-timezone'] ?? 'UTC').setLocale($('locale').item.json['users-locale'] ?? 'en-US').toLocaleString(DateTime.DATE_FULL) }}"
+            },
+            {
+              "id": "343ec7d5-fcb5-454d-b947-4b0f2e94f930",
+              "name": "users-current-date-plus-7",
+              "type": "string",
+              "value": "={{   $now.plus({ days: 7 }).setZone($('locale').item.json['users-timezone'] ?? 'UTC').setLocale($('locale').item.json['users-locale'] ?? 'en-US').toLocaleString(DateTime.DATE_FULL) }}"
+            },
+            {
+              "id": "ce0de19d-9cb1-4918-ade5-47f22f35f8e8",
+              "name": "users-current-day-1-minute-before-midnight",
+              "type": "string",
+              "value": "={{\n  $now.setZone($('locale').item.json['users-timezone'] ?? 'UTC')\n      .endOf('day')\n      .setLocale($('locale').item.json['users-locale'] ?? 'en-US')\n      .toLocaleString(DateTime.DATETIME_FULL)\n}}"
+            },
+            {
+              "id": "800dff91-469d-4a2b-acb0-a0b79d0b9341",
+              "name": "users-current-day-1-minute-before-midnight-plus-7-days",
+              "type": "string",
+              "value": "={{   $now.setZone($('locale').item.json['users-timezone'] ?? 'UTC')       .plus({ days: 7 })       .endOf('day')       .setLocale($('locale').item.json['users-locale'] ?? 'en-US')       .toLocaleString(DateTime.DATETIME_FULL) }}"
+            },
+            {
+              "id": "d04c43fe-1f6d-4e7e-b82f-70cebb7484a6",
+              "name": "users-current-day-1-minute-before-midnight-iso",
+              "type": "string",
+              "value": "={{\n  $now.setZone($('locale').item.json['users-timezone'] ?? 'UTC')\n      .endOf('day')\n      .toISO()\n}}"
+            },
+            {
+              "id": "5aee9416-0ad6-43b9-936f-edce6a292cce",
+              "name": "users-current-day-1-minute-before-midnight-plus-7-days-iso",
+              "type": "string",
+              "value": "={{   $now.setZone($('locale').item.json['users-timezone'] ?? 'UTC')       .plus({ days: 7 })       .endOf('day')       .toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "553cb98c-bb39-41dd-a4cc-c5bcb917a62b",
+      "name": "date_time",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        112,
+        1152
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "content": "✨ **simplify_evens_json (Code)**\n\n*   **Purpose:** Cleans the raw event data from Google Calendar.\n*   **Details:** Runs JavaScript to remove fields like `htmlLink`, `etag`, `iCalUID`, etc., to provide a cleaner dataset to the AI.\n*   **To Modify:** Only if you need to keep or remove specific event fields not covered.",
+        "height": 400,
+        "width": 440,
+        "color": 4
+      },
+      "id": "b6755c1e-9161-4e48-9ac4-2499c0681277",
+      "name": "Sticky Note6",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        928,
+        784
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "➕ **aggregate_events (Aggregate)**\n\n*   **Purpose:** Combines all individual simplified event items into a single JSON array.\n*   **Details:** Creates a field named `eventdata` which contains the list of all events. This is necessary for the AI agent to process all events at once.\n*   **To Modify:** Usually no changes needed.",
+        "height": 400,
+        "width": 440,
+        "color": 4
+      },
+      "id": "b17b294e-9fa5-4a66-98eb-5a96e60bcfa4",
+      "name": "Sticky Note7",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1440,
+        784
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "🧠 **Google Gemini (Language Model)**\n\n*   **Purpose:** Establishes the connection to the Google Gemini AI model.\n*   **Details:** This node itself doesn't do the processing but provides the AI capability to the `event_summary_agent`.\n*   **‼️ USER ACTION REQUIRED ‼️:**\n    *   **Credentials:** Set up and select your Google Gemini (PaLM) API credentials.\n    *   **Model Name:** Default is `models/gemini-2.5-flash-preview-05-20`. Change if needed.",
+        "height": 400,
+        "width": 440,
+        "color": 6
+      },
+      "id": "688e1eb9-3608-4ca2-b460-4777ff585e24",
+      "name": "Sticky Note8",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1936,
+        1408
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "📄➡️🌐 **markdown_to_html (Converter)**\n\n*   **Purpose:** Converts the Markdown text generated by the `event_summary_agent` into HTML.\n*   **Details:** Ensures the email body is well-formatted (line breaks, bolding, lists, emojis).\n*   **To Modify:** Usually no changes needed. Options like `emoji` and `simpleLineBreaks` are enabled.",
+        "height": 352,
+        "width": 440,
+        "color": 4
+      },
+      "id": "c4c226a5-4f3f-40da-a784-b4a9ec2f201d",
+      "name": "Sticky Note9",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2432,
+        784
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "📧 **send_email (Email)**\n\n*   **Purpose:** Sends the final HTML summary as an email.\n*   **Details:** Uses the HTML output from the `Markdown` node as the email body. The subject is dynamically generated.\n*   **‼️ USER ACTION REQUIRED ‼️:**\n    1.  **Credentials:** Configure and select your SMTP (email sending) account.\n    2.  `fromEmail`: Set your desired sender email address.\n    3.  `toEmail`: Set the recipient email address(es).\n    *   **To Modify (Optional):** Customize the `subject` line format.",
+        "height": 400,
+        "width": 440,
+        "color": 4
+      },
+      "id": "4d7cf950-4d69-4f52-8069-99fc5a0921c9",
+      "name": "Sticky Note10",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2928,
+        784
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "🤖 **event_summary_agent (AI Agent)**\n\n*   **Purpose:** Generates a well-formatted weekly schedule summary using the AI model.\n*   **Details:** Takes the `eventdata` (from `aggregate_events`) and a detailed prompt (under \"System Message\") that instructs the AI on output structure, date formatting, priority event identification, and weekly insights.\n*   **To Modify:** The \"System Message\" can be tweaked to change:\n    *   Greeting style.\n    *   Date/time formats (though largely controlled by `locale`).\n    *   Keywords for \"IMPORTANT\" events (`urgent`, `deadline`, etc.).\n    *   The style or focus of the \"Weekly Insight.\"",
+        "height": 400,
+        "width": 440,
+        "color": 4
+      },
+      "id": "0383145e-eae5-4de9-9fe2-abaad08eca80",
+      "name": "Sticky Note11",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1936,
+        784
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "mode": "markdownToHtml",
+        "markdown": "={{ $json.output }}",
+        "destinationKey": "email-html",
+        "options": {
+          "emoji": true,
+          "simpleLineBreaks": true
+        }
+      },
+      "id": "081e0849-0d34-4702-a2b3-bd6a6649fa47",
+      "name": "markdown_to_html",
+      "type": "n8n-nodes-base.markdown",
+      "position": [
+        2608,
+        1152
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2080,
+        1696
+      ],
+      "id": "94eed98a-6d76-4a0b-a358-fd65612eb3eb",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "DQX28WREINIoUWoo",
+          "name": "Teo openai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "teomastro1999@gmail.com",
+        "subject": "📅 Your Weekly Calendar Summary",
+        "message": "={{ $json['email-html'] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        3120,
+        1152
+      ],
+      "id": "c175f3b1-806d-4120-8fb6-800bc0d80da6",
+      "name": "Send a message",
+      "webhookId": "d2a60b4d-f8fa-4085-ae9c-7666c5358861",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "dNdC9dt0sd3OjzvS",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -816,
+        1344
+      ],
+      "id": "4d33504d-297f-4c5e-8ee9-18a6e58dde93",
+      "name": "When clicking ‘Execute workflow’"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "locale": {
+      "main": [
+        [
+          {
+            "node": "date_time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "date_time": {
+      "main": [
+        [
+          {
+            "node": "get_next_weeks_events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "weekly_schedule": {
+      "main": [
+        [
+          {
+            "node": "locale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "aggregate_events": {
+      "main": [
+        [
+          {
+            "node": "event_summary_agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "markdown_to_html": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "event_summary_agent": {
+      "main": [
+        [
+          {
+            "node": "markdown_to_html",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "simplify_evens_json": {
+      "main": [
+        [
+          {
+            "node": "aggregate_events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_next_weeks_events": {
+      "main": [
+        [
+          {
+            "node": "simplify_evens_json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "event_summary_agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "locale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "61f7872a-c25c-4e79-87a5-d3bba5ef4dde",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "96add2e303f72aa16a39eea436903593869549c40bd26622ad76490ad225eb9e"
+  },
+  "id": "rpC6edes9GPUwMjH",
+  "tags": []
+}

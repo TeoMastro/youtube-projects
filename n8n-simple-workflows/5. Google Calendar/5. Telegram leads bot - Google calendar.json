@@ -1,0 +1,928 @@
+{
+  "name": "5. Telegram leads bot - Google calendar",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "033e4d38-3f59-4ef2-833b-1f01332f9ac6",
+      "name": "Telegram Message Received",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1280,
+        336
+      ],
+      "webhookId": "telegram-scheduling-bot",
+      "credentials": {
+        "telegramApi": {
+          "id": "LftJHHGBxeDoPZtu",
+          "name": "social teo bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "chatId",
+              "value": "={{ $json.message.chat.id }}",
+              "type": "string"
+            },
+            {
+              "id": "2",
+              "name": "userId",
+              "value": "={{ $json.message.from.id }}",
+              "type": "string"
+            },
+            {
+              "id": "3",
+              "name": "userName",
+              "value": "={{ $json.message.from.first_name }}",
+              "type": "string"
+            },
+            {
+              "id": "4",
+              "name": "userMessage",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            },
+            {
+              "id": "5",
+              "name": "sessionId",
+              "value": "={{ $json.message.chat.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e966c1a8-f6ba-4def-ac71-40fbbc968b97",
+      "name": "Extract Message Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        -1040,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.userMessage }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are a friendly scheduling assistant for a social media management company.\n\nTODAY IS: {{ $now.format('dddd, YYYY-MM-DD') }}\n\nYour company offers Instagram & Facebook management, content creation, community management, analytics, and paid advertising.\n\nWhen users first say \"hello\" or \"/start\", greet them warmly and explain you can answer questions about services or help schedule meetings.\n\nSCHEDULING RULES:\n\nWhen the user requests a meeting with a specific time:\n1. Figure out the exact date they mean\n2. Respond with ONLY this JSON (no other text):\n\n{\"action\":\"schedule_meeting\",\"datetime\":\"YYYY-MM-DD HH:MM\",\"user_name\":\"{{ $('Extract Message Data').item.json.userName }}\"}\n\nDATE CALCULATION:\n- \"tomorrow\" = {{ $now.plus({days: 1}).format('YYYY-MM-DD') }}\n- \"next Tuesday\" = the NEXT Tuesday after today (not this week's Tuesday)\n- \"Tuesday\" without \"next\" = the upcoming Tuesday (could be this week)\n\nCRITICAL: Use 24-hour format (9am = 09:00, 2pm = 14:00)\n\nEXAMPLES:\nToday is Thursday, 2025-11-21\n\nUser: \"meeting next Tuesday at 9am\"\nYou: {\"action\":\"schedule_meeting\",\"datetime\":\"2025-11-26 09:00\",\"user_name\":\"{{ $('Extract Message Data').item.json.userName }}\"}\n\nUser: \"book tomorrow at 2pm\"  \nYou: {\"action\":\"schedule_meeting\",\"datetime\":\"2025-11-22 14:00\",\"user_name\":\"{{ $('Extract Message Data').item.json.userName }}\"}\n\nFor questions about services, use the company_knowledge tool.\n\nCurrent user: {{ $('Extract Message Data').item.json.userName }}"
+        }
+      },
+      "id": "f9a702e9-aca9-4591-a8ab-a0960135ba75",
+      "name": "RAG Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        -832,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "f23907ca-ed0c-42df-9bd7-191eecf06b2f",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -1136,
+        608
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "DQX28WREINIoUWoo",
+          "name": "Teo openai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Contains all information about the company's services, pricing, packages, process, and FAQs. Use this to answer any questions about what the company offers."
+      },
+      "id": "e1d5a21a-9831-471b-a31d-80374442eb8e",
+      "name": "RAG Knowledge Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1.1,
+      "position": [
+        -864,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "tableName": {
+          "__rl": true,
+          "value": "company_knowledge",
+          "mode": "list"
+        },
+        "options": {
+          "queryName": "match_company_knowledge"
+        }
+      },
+      "id": "35d1b608-1444-4a37-a942-38071b0f34ca",
+      "name": "Supabase Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        -1040,
+        736
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "ToAJrFVDvfMzgftS",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
+      "id": "4de1fe53-90a4-4742-a9f1-22bbc5822cda",
+      "name": "Embeddings OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -1120,
+        864
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "DQX28WREINIoUWoo",
+          "name": "Teo openai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "54c4262b-dc77-4c1f-a54c-85661fde11cc",
+              "leftValue": "={{ $json.isScheduling }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "dd5a6709-1432-4d41-89d2-4e65fc463e2d",
+      "name": "Is Scheduling Request?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse and validate date/time from agent response\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  try {\n    const datetimeStr = item.json.datetime;\n    \n    // Parse the datetime string\n    // Format: \"YYYY-MM-DD HH:MM\"\n    const [datePart, timePart] = datetimeStr.split(' ');\n    const [year, month, day] = datePart.split('-');\n    const [hour, minute] = timePart.split(':');\n    \n    // Create date in Greece timezone (UTC+2)\n    // We need to create a UTC date and then adjust for Greece offset\n    const requestedTimeUTC = new Date(Date.UTC(year, month - 1, day, hour - 2, minute));\n    const now = new Date();\n    \n    // Create the local Greece time for validation\n    const requestedTimeGreece = new Date(year, month - 1, day, hour, minute);\n    \n    console.log('Input datetime string:', datetimeStr);\n    console.log('Requested time (Greece):', requestedTimeGreece.toString());\n    \n    // Validate future date (using Greece time)\n    if (requestedTimeGreece <= now) {\n      results.push({\n        json: {\n          ...item.json,\n          valid: false,\n          error: \"past_date\",\n          message: \"That time has already passed. Please choose a future date and time.\"\n        }\n      });\n      continue;\n    }\n    \n    // Validate business hours (9am-5pm)\n    const hour24 = parseInt(hour);\n    if (hour24 < 9 || hour24 >= 17) {\n      results.push({\n        json: {\n          ...item.json,\n          valid: false,\n          error: \"outside_hours\",\n          message: \"We're available 9am-5pm. Please choose a time during business hours.\"\n        }\n      });\n      continue;\n    }\n    \n    // Validate weekday\n    const dayOfWeek = requestedTimeGreece.getDay();\n    if (dayOfWeek === 0 || dayOfWeek === 6) {\n      results.push({\n        json: {\n          ...item.json,\n          valid: false,\n          error: \"weekend\",\n          message: \"We're only available Monday-Friday. Please choose a weekday.\"\n        }\n      });\n      continue;\n    }\n    \n    // Calculate end time (1 hour meeting)\n    const endHour = (parseInt(hour) + 1).toString().padStart(2, '0');\n    \n    // Format with Greece timezone explicitly\n    function toGreekTime(y, m, d, h, min) {\n      const pad = (n) => String(n).padStart(2, '0');\n      return `${y}-${pad(m)}-${pad(d)}T${pad(h)}:${pad(min)}:00+02:00`;\n    }\n    \n    const startTimeRFC = toGreekTime(year, month, day, hour, minute);\n    const endTimeRFC = toGreekTime(year, month, day, endHour, minute);\n    \n    console.log('Start time (Greek):', startTimeRFC);\n    console.log('End time (Greek):', endTimeRFC);\n    \n    // Format for display\n    const formattedDateTime = requestedTimeGreece.toLocaleString('en-US', {\n      weekday: 'long',\n      year: 'numeric',\n      month: 'long',\n      day: 'numeric',\n      hour: '2-digit',\n      minute: '2-digit',\n      hour12: true\n    });\n    \n    results.push({\n      json: {\n        ...item.json,\n        valid: true,\n        startTime: startTimeRFC,\n        endTime: endTimeRFC,\n        startTimeLocal: datetimeStr,\n        formattedDateTime: formattedDateTime\n      }\n    });\n  } catch (error) {\n    console.error('Date parsing error:', error);\n    results.push({\n      json: {\n        ...item.json,\n        valid: false,\n        error: \"parse_error\",\n        message: \"I couldn't understand that date/time. Please try again.\"\n      }\n    });\n  }\n}\n\nreturn results;"
+      },
+      "id": "38895986-c9e2-40e6-8a60-00a31d1acdd5",
+      "name": "Validate Date & Time",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.valid }}",
+              "value2": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "542b6963-fa69-442c-a29a-d5649128fbc2",
+      "name": "Is Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        128,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "teomastro1999@gmail.com",
+          "mode": "list",
+          "cachedResultName": "teomastro1999@gmail.com"
+        },
+        "returnAll": true,
+        "options": {
+          "timeMin": "={{ $('Validate Date & Time').item.json.startTime }}",
+          "timeMax": "={{ $('Validate Date & Time').item.json.endTime }}"
+        }
+      },
+      "id": "a65bb763-26d4-4b44-b910-8439c886ca03",
+      "name": "Check Calendar",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.2,
+      "position": [
+        432,
+        144
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "ilF4WKKHVd67Oi8v",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ Object.keys($json).length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              },
+              "id": "4155c863-6d05-4e50-a146-44ad3d9b9b63"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "74712d05-08f9-42fe-8573-0aa20b19db6d",
+      "name": "Is Available?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        656,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "teomastro1999@gmail.com",
+          "mode": "list",
+          "cachedResultName": "teomastro1999@gmail.com"
+        },
+        "start": "={{ $('Validate Date & Time').item.json.startTime }}",
+        "end": "={{ $('Validate Date & Time').item.json.endTime }}",
+        "additionalFields": {
+          "description": "={{ \"Scheduled meeting with \" + ($json.user_name || $json.userName || $('Extract Message Data').first().json.userName) + \" to discuss social media management services.\" }}",
+          "summary": "={{ \"Meeting with \" + ($json.user_name || $json.userName || $('Extract Message Data').first().json.userName) }}"
+        }
+      },
+      "id": "3a6c6676-5e92-412d-a1c5-4bc8316726f0",
+      "name": "Create Calendar Event",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        144
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "ilF4WKKHVd67Oi8v",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.all()[0].json;\n\n// Get the event details\nconst startTime = new Date(item.start?.dateTime || item.startTime);\nconst endTime = new Date(item.end?.dateTime || item.endTime);\nconst userName = item.user_name || item.userName || 'Guest';\nconst summary = `Social Media Consultation - ${userName}`;\nconst description = 'Scheduled meeting to discuss social media management services';\n\n// Get chatId from Extract Message Data\nconst chatId = $('Extract Message Data').first().json.chatId;\n\n// Format dates for ICS (YYYYMMDDTHHMMSSZ)\nfunction formatICSDate(date) {\n  const year = date.getUTCFullYear();\n  const month = String(date.getUTCMonth() + 1).padStart(2, '0');\n  const day = String(date.getUTCDate()).padStart(2, '0');\n  const hours = String(date.getUTCHours()).padStart(2, '0');\n  const minutes = String(date.getUTCMinutes()).padStart(2, '0');\n  const seconds = String(date.getUTCSeconds()).padStart(2, '0');\n  return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;\n}\n\nconst now = new Date();\nconst uid = `${now.getTime()}@socialmediaconsult.com`;\n\nconst icsContent = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Social Media Company//Appointment//EN\nCALSCALE:GREGORIAN\nMETHOD:REQUEST\nBEGIN:VEVENT\nUID:${uid}\nDTSTAMP:${formatICSDate(now)}\nDTSTART:${formatICSDate(startTime)}\nDTEND:${formatICSDate(endTime)}\nSUMMARY:${summary}\nDESCRIPTION:${description}\nLOCATION:Online Meeting\nSTATUS:CONFIRMED\nSEQUENCE:0\nBEGIN:VALARM\nTRIGGER:-PT15M\nACTION:DISPLAY\nDESCRIPTION:Reminder: Meeting in 15 minutes\nEND:VALARM\nEND:VEVENT\nEND:VCALENDAR`;\n\n// Format the datetime nicely\nconst formattedDateTime = startTime.toLocaleString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric',\n  hour: '2-digit',\n  minute: '2-digit',\n  hour12: true,\n  timeZone: 'Europe/Athens'\n});\n\nreturn [{\n  json: {\n    ...item,\n    chatId: chatId,  // Add chatId to output\n    icsContent: icsContent,\n    icsFileName: 'meeting.ics',\n    formattedDateTime: formattedDateTime,  // Add formatted date\n    user_name: userName\n  },\n  binary: {\n    data: {\n      data: Buffer.from(icsContent).toString('base64'),\n      mimeType: 'text/calendar',\n      fileName: 'meeting.ics',\n      fileExtension: 'ics'\n    }\n  }\n}];"
+      },
+      "id": "5f2d0849-f0ae-40aa-88b0-e80b0dba7b8f",
+      "name": "Generate ICS File",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Message Data').first().json.chatId }}",
+        "text": "=✅ Meeting Confirmed!\n\nYour consultation is scheduled for:\n📅 {{ $json.formattedDateTime || new Date($json.start.dateTime).toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) }}\n\nI'm sending you a calendar file (.ics) you can add to your calendar.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "9e529b34-cb3b-4511-948b-5ff3f4edb48f",
+      "name": "Send Confirmation",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1312,
+        144
+      ],
+      "webhookId": "9920f203-4f4b-485e-ba3b-52f4100ffe6a",
+      "credentials": {
+        "telegramApi": {
+          "id": "LftJHHGBxeDoPZtu",
+          "name": "social teo bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendDocument",
+        "chatId": "={{ $json.chatId }}",
+        "binaryData": true,
+        "additionalFields": {}
+      },
+      "id": "860619b4-2d18-42bb-b2e9-f96efff653f1",
+      "name": "Send ICS File",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1744,
+        144
+      ],
+      "webhookId": "967f3713-49f6-4402-9f88-7ac935d2fe1b",
+      "credentials": {
+        "telegramApi": {
+          "id": "LftJHHGBxeDoPZtu",
+          "name": "social teo bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Message Data').item.json.chatId }}",
+        "text": "Looking forward to speaking with you! If you need to reschedule, just send me a message. 😊",
+        "additionalFields": {}
+      },
+      "id": "d0614e3f-ef82-4328-8de7-2a0ec9ba7081",
+      "name": "Send Closing Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1968,
+        144
+      ],
+      "webhookId": "5e7f7e60-4463-49b9-bd4e-09b4a7acb4f3",
+      "credentials": {
+        "telegramApi": {
+          "id": "LftJHHGBxeDoPZtu",
+          "name": "social teo bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Message Data').item.json.chatId }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "id": "ceff2108-6d2b-46ff-bf95-8d33bbf84ec5",
+      "name": "Send Agent Response",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -80,
+        512
+      ],
+      "webhookId": "013a744a-2546-48d3-88e1-139870a23240",
+      "credentials": {
+        "telegramApi": {
+          "id": "LftJHHGBxeDoPZtu",
+          "name": "social teo bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Message Data').item.json.chatId }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {}
+      },
+      "id": "d5f34eb5-e0b3-4974-8b29-3d25e5499cf2",
+      "name": "Send Error Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        432,
+        352
+      ],
+      "webhookId": "38a84fa6-f495-4176-a625-c6260b2424d1",
+      "credentials": {
+        "telegramApi": {
+          "id": "LftJHHGBxeDoPZtu",
+          "name": "social teo bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Message Data').item.json.chatId }}",
+        "text": "I'm sorry, that time slot is already booked. 😔  Could you suggest another time? We're available Monday-Friday, 9am-5pm.",
+        "additionalFields": {}
+      },
+      "id": "a063594c-828e-4bec-8d1f-c4db3f32b4b4",
+      "name": "Send Unavailable Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        864,
+        384
+      ],
+      "webhookId": "af1c6719-4c59-4aa9-a57f-fc5c664cbc7a",
+      "credentials": {
+        "telegramApi": {
+          "id": "LftJHHGBxeDoPZtu",
+          "name": "social teo bot"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -848,
+        416
+      ],
+      "id": "da051f07-6d1f-4b45-9846-998b3b100e1d",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "rGm36wSwUBMEZmQc",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -752,
+        752
+      ],
+      "id": "edaadf36-216c-4999-8899-5bee174b36dc",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "DQX28WREINIoUWoo",
+          "name": "Teo openai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  let response = item.json.output || '';\n  \n  // Get user info from Extract Message Data node\n  const userName = $('Extract Message Data').item.json.userName;\n  const chatId = $('Extract Message Data').item.json.chatId;\n  const userId = $('Extract Message Data').item.json.userId;\n  \n  // Check if response contains JSON\n  if (response.includes('{') && response.includes('}')) {\n    try {\n      // Extract JSON from response (handle markdown code blocks)\n      let jsonStr = response;\n      \n      // Remove markdown code blocks if present\n      jsonStr = jsonStr.replace(/```json\\s*/g, '').replace(/```\\s*/g, '').trim();\n      \n      // Find JSON object\n      const jsonMatch = jsonStr.match(/\\{[^{}]*\\}/);\n      if (jsonMatch) {\n        const parsed = JSON.parse(jsonMatch[0]);\n        \n        // Override user_name with actual name if it's \"FirstName\" or missing\n        if (!parsed.user_name || parsed.user_name === \"FirstName\") {\n          parsed.user_name = userName;\n        }\n        \n        results.push({\n          json: {\n            ...parsed,\n            output: response,\n            isScheduling: true,\n            chatId: chatId,\n            userId: userId,\n            userName: userName\n          }\n        });\n      } else {\n        // Not JSON, regular response\n        results.push({\n          json: {\n            output: response,\n            isScheduling: false\n          }\n        });\n      }\n    } catch (error) {\n      // If parsing fails, treat as regular response\n      results.push({\n        json: {\n          output: response,\n          isScheduling: false\n        }\n      });\n    }\n  } else {\n    // Plain text response\n    results.push({\n      json: {\n        output: response,\n        isScheduling: false\n      }\n    });\n  }\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -528,
+        224
+      ],
+      "id": "a6225bd6-563c-4ffb-bb5f-c6f30dd2b8a0",
+      "name": "Parse Agent Response"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1120,
+        -48
+      ],
+      "id": "785079f6-c187-4dc1-af03-9715fb1e0c96",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "const knowledgeBase = [\n  \"We provide full Instagram management including content planning, posting, feed design, hashtag research, and weekly analytics reports. Our strategy focuses on increasing engagement, reach, and community growth.\",\n  \"Our Facebook management service includes post creation, scheduling, community moderation, ad campaign optimization, and page growth strategies. We prioritize meaningful interactions and brand trust.\",\n  \"We create professional social media content including graphics, short-form videos, carousels, captions, and branded templates. Content is tailored to your brand voice and target audience.\",\n  \"Our pricing starts at $350/month for basic social media management, $600/month for standard packages, and $1,200+/month for full-scale content production and advertising management.\",\n  \"All monthly social media packages include strategy planning, posting calendars, content creation, page optimization, audience insights, and monthly performance reporting.\",\n  \"Onboarding typically takes 3–5 business days. During this time, we set up your content calendar, gather brand assets, and define your posting strategy.\",\n  \"Our workflow includes a strategy session, content creation, weekly scheduling, community engagement, analytics review, and monthly consultation calls to refine strategy.\",\n  \"We manage paid social campaigns on Facebook, Instagram, and TikTok. Services include audience research, creative design, A/B testing, budget optimization, and performance reporting.\",\n  \"Our minimum contract length is 3 months to allow campaigns enough time to optimize and deliver measurable results.\",\n  \"While we cannot guarantee a specific number of followers, we do guarantee consistent content delivery, data-driven decisions, and improved engagement over time.\",\n  \"We are a social media management agency helping small businesses grow organically through quality content, strong branding, and ongoing strategy support.\",\n  \"Our community management team responds to comments, DMs, reviews, and inquiries within business hours to maintain positive customer relationships and boost engagement.\"\n];\n\nreturn knowledgeBase.map(text => ({ \n  json: { \n    data: text \n  } \n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -912,
+        -48
+      ],
+      "id": "45f2a305-c386-438b-bda6-5b3b5d9c7bdd",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "company_knowledge",
+          "mode": "list",
+          "cachedResultName": "company_knowledge"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        -704,
+        -192
+      ],
+      "id": "1e3b5c9c-ef1d-4e5f-9579-c8c4e7103ef3",
+      "name": "Supabase Vector Store1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ToAJrFVDvfMzgftS",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -720,
+        -32
+      ],
+      "id": "a88dc47b-1de3-485f-a574-e19db1444d80",
+      "name": "Embeddings OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "DQX28WREINIoUWoo",
+          "name": "Teo openai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        -592,
+        -48
+      ],
+      "id": "4aa8e553-c7cd-4dcb-9b9c-fb36a7a865b9",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get binary data from Generate ICS File node\nconst icsNode = $('Generate ICS File').first();\nconst confirmNode = $input.first();\n\n// Get chat ID from the confirmation response\nconst chatId = confirmNode.json.result.chat.id;\n\nreturn [{\n  json: {\n    chatId: chatId\n  },\n  binary: {\n    data: icsNode.binary.data  // Copy the binary data\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1520,
+        144
+      ],
+      "id": "9a62ccdc-d773-43d7-b84b-0009fd264a05",
+      "name": "Code in JavaScript1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Message Received": {
+      "main": [
+        [
+          {
+            "node": "Extract Message Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Message Data": {
+      "main": [
+        [
+          {
+            "node": "RAG Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RAG Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Agent Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "RAG Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RAG Knowledge Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "RAG Knowledge Tool",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Scheduling Request?": {
+      "main": [
+        [
+          {
+            "node": "Validate Date & Time",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Agent Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Date & Time": {
+      "main": [
+        [
+          {
+            "node": "Is Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Valid?": {
+      "main": [
+        [
+          {
+            "node": "Check Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Error Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Calendar": {
+      "main": [
+        [
+          {
+            "node": "Is Available?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Available?": {
+      "main": [
+        [
+          {
+            "node": "Create Calendar Event",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Unavailable Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Calendar Event": {
+      "main": [
+        [
+          {
+            "node": "Generate ICS File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate ICS File": {
+      "main": [
+        [
+          {
+            "node": "Send Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Confirmation": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send ICS File": {
+      "main": [
+        [
+          {
+            "node": "Send Closing Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "RAG Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "RAG Knowledge Tool",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Agent Response": {
+      "main": [
+        [
+          {
+            "node": "Is Scheduling Request?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Send ICS File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3105d6a6-9fce-43e2-a3c2-4c2978b98390",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "96add2e303f72aa16a39eea436903593869549c40bd26622ad76490ad225eb9e"
+  },
+  "id": "MjlW9e5E8Qkhs7a8",
+  "tags": []
+}
