@@ -1,0 +1,805 @@
+{
+  "name": "Master 80% of n8n with 17 nodes",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "46da3a50-34e6-4c38-9271-3bf64acab373",
+      "name": "1. Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "id": "cf1f4282-0fef-4b91-aebd-7ea83892bfd3",
+      "name": "2. Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -128,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "path": "demo-form-webhook",
+        "formTitle": "Contact Form Demo",
+        "formDescription": "Example n8n form",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Message",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "09ec6124-ee88-41fc-ac73-eb7826bd1637",
+      "name": "3. n8n Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2,
+      "position": [
+        -128,
+        512
+      ],
+      "webhookId": "demo-form-webhook"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": "your-spreadsheet-id-here",
+        "sheetName": "Sheet1",
+        "columns": {
+          "mappingMode": "autoMapInputData"
+        },
+        "options": {}
+      },
+      "id": "59cc5514-84f4-4cfb-9d6d-7fac19d535c1",
+      "name": "5. Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        256,
+        864
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ZKEuSXNi8Hoc2dz7",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "field1",
+              "name": "fullName",
+              "value": "={{ $json.firstName + ' ' + $json.lastName }}",
+              "type": "string"
+            },
+            {
+              "id": "field2",
+              "name": "score",
+              "value": "={{ $json.score }}",
+              "type": "number"
+            },
+            {
+              "id": "field3",
+              "name": "isActive",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "field4",
+              "name": "processedDate",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8005b702-8168-48b3-ab26-cfce31a5d62f",
+      "name": "6. Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        816,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "items",
+        "options": {}
+      },
+      "id": "0f0c96d6-4fe9-438d-8da6-68035e37c15d",
+      "name": "7. Split Out",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        560,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex",
+        "options": {}
+      },
+      "id": "10b5a212-cd91-4716-920a-40100b071919",
+      "name": "8. Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        1088,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "a70db105-a9d6-4127-b472-bd4f02dbd25f",
+      "name": "9. Aggregate",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1312,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process and transform data with custom JavaScript\nconst items = $input.all();\n\nconst processed = items.map(item => {\n  return {\n    json: {\n      ...item.json,\n      processed: true,\n      itemCount: items.length,\n      customCalculation: (item.json.score || 0) * 1.1,\n      timestamp: new Date().toISOString()\n    }\n  };\n});\n\nreturn processed;"
+      },
+      "id": "db1d3b69-fabc-4aeb-ae4c-e20119f74e91",
+      "name": "10. Code Node",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.score }}",
+              "operation": "larger",
+              "value2": 80
+            }
+          ]
+        }
+      },
+      "id": "0f0d2e25-e120-4c0d-83bc-abf2ee955125",
+      "name": "11. IF Node",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        736,
+        752
+      ]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.status }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "pending"
+            },
+            {
+              "value2": "approved",
+              "output": 1
+            },
+            {
+              "value2": "rejected",
+              "output": 2
+            }
+          ]
+        },
+        "fallbackOutput": 3
+      },
+      "id": "a24b27b0-905d-42f6-8c85-3487c5069398",
+      "name": "12. Switch Node",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        960,
+        736
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.example.com/data",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "data",
+              "value": "={{ $json }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9b39c0c9-bdd7-4f15-86fd-664cb2f9f5cc",
+      "name": "13. HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1184,
+        768
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "demo-webhook",
+        "options": {}
+      },
+      "id": "583ed5f4-2550-49ea-9610-dfcf00765291",
+      "name": "14. Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        1392,
+        768
+      ],
+      "webhookId": "demo-incoming-webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"message\": \"Data received\", \"timestamp\": $now.toISO() } }}",
+        "options": {}
+      },
+      "id": "6a2b3108-4488-434d-af85-2380711b2076",
+      "name": "15. Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1584,
+        768
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "fb09cac7-093b-421c-aee2-751bce635fa0",
+      "name": "16. Message a Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        944
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "DQX28WREINIoUWoo",
+          "name": "Teo openai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "id": "d80670d9-e055-4e1c-b0f7-c86a5a092bc9",
+      "name": "17. AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        -96,
+        912
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 🎯 TRIGGERS\nWorkflows start here! These nodes kick off your automation.\n\n• **Manual Trigger**: Click to test during development\n• **Schedule**: Run automatically at specific times\n• **Form**: Collect data from users",
+        "height": 808,
+        "width": 450,
+        "color": 7
+      },
+      "id": "dff96de6-80aa-4dd7-b478-85ed20616daa",
+      "name": "Sticky Note - Triggers",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 📊 DATA STORAGE\nSave your data for later use or analysis.\n\n• **Data Tables**: Built-in n8n storage\n• **Google Sheets**: Spreadsheet integration",
+        "height": 516,
+        "width": 450,
+        "color": 3
+      },
+      "id": "74699160-b0d8-45ec-b2b1-93a0688d30be",
+      "name": "Sticky Note - Storage",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        224,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## ⚙️ DATA PROCESSING CHAIN\nTransform data step by step. Each node processes the output of the previous one.\n\n**Flow**: Demo Data → Edit Fields → Split Out → Merge → Aggregate → Code\n\nThis shows how data flows and transforms through multiple processing steps!\n\n• **Edit Fields**: Add/modify/remove fields\n• **Split Out**: Break arrays into individual items\n• **Merge**: Combine data from multiple sources\n• **Aggregate**: Combine multiple items into one\n• **Code**: Custom JavaScript for complex logic",
+        "height": 636,
+        "width": 1558,
+        "color": 4
+      },
+      "id": "a86fd193-075f-4c57-abe7-059f54c54072",
+      "name": "Sticky Note - Processing",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        224,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 🧠 LOGIC & DECISIONS\nMake your workflows smart with conditional routing.\n\n• **IF**: Route based on true/false conditions\n• **Switch**: Multiple paths based on different values",
+        "height": 508,
+        "width": 450,
+        "color": 5
+      },
+      "id": "42d0cfbc-b7cb-4546-b59d-c757334dbbe8",
+      "name": "Sticky Note - Logic",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        688,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 🔌 CONNECTIVITY\nConnect to the outside world - send and receive data from any service.\n\n• **HTTP Request**: Call any API\n• **Webhook**: Receive data from external apps\n• **Respond to Webhook**: Send response back",
+        "height": 496,
+        "width": 650,
+        "color": 6
+      },
+      "id": "9c5a7e26-4dc4-4d44-8f44-27ae4c1ca0d5",
+      "name": "Sticky Note - Connectivity",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1152,
+        576
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 🤖 AI INTEGRATION\nAdd artificial intelligence to automate complex tasks.\n\n• **Message a Model**: Chat with AI (OpenAI, Claude, etc.)\n• **AI Agent**: Build intelligent agents that use tools",
+        "height": 316,
+        "width": 450,
+        "color": 2
+      },
+      "id": "c1aa6780-5195-4a3b-a6fb-d0125f8a208e",
+      "name": "Sticky Note - AI",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        752
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# 🎓 Master 80% of n8n with Just These 17 Nodes\n\n**Welcome to your complete n8n foundation!**\n\nThis workflow demonstrates every essential node you need.\nEach category builds on the previous one.\n\n👇 **Start with Manual Trigger**, then explore each section!",
+        "height": 272,
+        "width": 2052
+      },
+      "id": "c0f84ee9-530c-4f71-a599-ed114975d210",
+      "name": "Sticky Note - Title",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        -368
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "demo-data",
+              "name": "items",
+              "value": "={{ [\n  { \"firstName\": \"John\", \"lastName\": \"Doe\", \"score\": 95, \"status\": \"approved\" },\n  { \"firstName\": \"Jane\", \"lastName\": \"Smith\", \"score\": 75, \"status\": \"pending\" },\n  { \"firstName\": \"Bob\", \"lastName\": \"Johnson\", \"score\": 88, \"status\": \"approved\" }\n] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5dc303b5-f03b-4c9d-9f90-ab70688838a0",
+      "name": "Demo Data Generator",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        336,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "extra-data",
+              "name": "category",
+              "value": "Premium",
+              "type": "string"
+            },
+            {
+              "id": "rating",
+              "name": "rating",
+              "value": 5,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "84f2d69d-3d75-4c8d-b162-18fed3cf7c9a",
+      "name": "Additional Data for Merge",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        336,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "8jODa0ey26abORn3",
+          "mode": "list",
+          "cachedResultName": "n8n test",
+          "cachedResultUrl": "/projects/9QL0HDCmsgOiHsKE/datatables/8jODa0ey26abORn3"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        256,
+        720
+      ],
+      "id": "ca082f41-0d99-4910-8cf1-a941ff2ff62e",
+      "name": "4. n8n data tables"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "a7adfcd3-b86b-474c-86b1-58a8ebf552a5",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        16,
+        1408
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "DQX28WREINIoUWoo",
+          "name": "Teo openai"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "5a43eefb-7f38-4a69-bb71-bedf679b81f2",
+      "name": "Postgres Chat Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1,
+      "position": [
+        160,
+        1408
+      ],
+      "notesInFlow": false,
+      "credentials": {
+        "postgres": {
+          "id": "rGm36wSwUBMEZmQc",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## RAG AI Agent with Chat Interface",
+        "height": 833,
+        "width": 2069
+      },
+      "id": "137abd82-ed83-41ed-ada0-5e8875dc9a04",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "public": true,
+        "options": {}
+      },
+      "id": "c3b08ecb-4c87-4161-9c73-1d3869563d42",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -208,
+        1200
+      ],
+      "webhookId": "e985d15f-b2f6-456d-be15-97e0b1544a40"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('When chat message received').item.json.chatInput }}",
+        "options": {
+          "systemMessage": "You are a personal assistant with access to the user's documents through the user_documents tool.\n\nIMPORTANT: For ANY question the user asks, you MUST:\n1. ALWAYS use the user_documents tool to search for relevant information\n2. Base your answer on the retrieved documents\n3. If no relevant documents are found, then say you don't have that information\n\nNever answer from your own knowledge without first checking the documents using the user_documents tool."
+        }
+      },
+      "id": "820e8843-9aca-428a-a0cd-52efa0162d6f",
+      "name": "RAG AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        112,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Search meeting notes",
+        "tableName": {
+          "__rl": true,
+          "value": "documents_google_drive",
+          "mode": "list",
+          "cachedResultName": "documents_google_drive"
+        },
+        "options": {
+          "queryName": "match_documents_google_drive"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        160,
+        1616
+      ],
+      "id": "ea0e0090-e29f-485e-b741-4c137bd3d2c4",
+      "name": "Supabase Vector Store2",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ToAJrFVDvfMzgftS",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
+      "id": "dc182014-2609-463e-b8cc-45caeb12edae",
+      "name": "Embeddings OpenAI2",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1,
+      "position": [
+        160,
+        1792
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "DQX28WREINIoUWoo",
+          "name": "Teo openai"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Demo Data Generator": {
+      "main": [
+        [
+          {
+            "node": "7. Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6. Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "8. Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7. Split Out": {
+      "main": [
+        [
+          {
+            "node": "6. Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Additional Data for Merge": {
+      "main": [
+        [
+          {
+            "node": "8. Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "8. Merge": {
+      "main": [
+        [
+          {
+            "node": "9. Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "9. Aggregate": {
+      "main": [
+        [
+          {
+            "node": "10. Code Node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1. Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Demo Data Generator",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Additional Data for Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store2": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI2": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store2",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a73a1977-0776-481d-8516-26c86a53fc89",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "96add2e303f72aa16a39eea436903593869549c40bd26622ad76490ad225eb9e"
+  },
+  "id": "21U1GWMEZGhNWOoj",
+  "tags": []
+}
