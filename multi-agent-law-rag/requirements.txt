@@ -1,0 +1,52 @@
+# Core LangChain and LangGraph
+langchain==0.3.7
+langchain-community==0.3.7
+langchain-openai==0.2.9
+langchain-core==0.3.19
+langchain-text-splitters==0.3.2
+langgraph==0.2.45
+langgraph-checkpoint==2.0.2
+
+# Vector Store (FAISS - better Windows compatibility)
+faiss-cpu==1.8.0
+pydantic==2.10.3
+pydantic-settings==2.6.1
+pickle5==0.0.12; python_version < '3.8'
+
+# Hybrid Search (Semantic + Keyword)
+rank-bm25==0.2.2
+
+# PDF Processing
+pdfplumber==0.11.4
+
+# OpenAI
+openai==1.57.2
+tiktoken==0.12.0
+
+# Date/Time Parsing (for Temporal Agent)
+python-dateutil==2.9.0
+dateparser==1.2.0
+
+# Async Support (for parallel execution)
+aiohttp==3.10.10
+aiohttpx==0.0.12
+
+# Environment Management
+python-dotenv==1.0.1
+
+# CLI Interface
+click==8.1.7
+rich==13.9.4
+
+# Utilities
+tenacity==9.0.0
+tqdm==4.67.1
+
+# Development and Testing
+pytest==8.3.4
+pytest-cov==6.0.0
+pytest-asyncio==0.24.0
+black==24.10.0
+ruff==0.8.4
+mypy==1.13.0
+types-requests==2.32.0.20241016
