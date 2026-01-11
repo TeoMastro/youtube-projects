@@ -1,0 +1,451 @@
+{
+  "name": "Invoice Processing",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "invoice-upload",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1b8f6fd2-ebc1-4027-9c5c-9b80fba26217",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        7072,
+        1872
+      ],
+      "webhookId": "invoice-upload"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.body.imageUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "f276ee29-5e2c-4ebc-b6f7-dfa70f7de933",
+      "name": "Download Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        7280,
+        1872
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst webhookData = $('Webhook').first().json.body;\n\n// Check if we have binary data\nif (!item.binary || !item.binary.data) {\n  throw new Error('No binary data received from Download Image node');\n}\n\nconst binary = item.binary.data;\n\n// Validate it's an image\nif (!binary.mimeType || !binary.mimeType.startsWith('image/')) {\n  throw new Error('Only image files are supported.');\n}\n\n// Get timestamp for unique filename\nconst timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);\n\n// Get extension from mime type\nlet extension = 'jpg';\nif (binary.mimeType === 'image/png') extension = 'png';\nelse if (binary.mimeType === 'image/jpeg') extension = 'jpg';\nelse if (binary.mimeType === 'image/webp') extension = 'webp';\n\nconst userId = webhookData.userId || 'user';\nconst fileName = `invoice_${timestamp}_${userId}.${extension}`;\n\n// IMPORTANT: Keep the exact binary structure for Google Drive\nreturn {\n  json: {\n    fileName: fileName,\n    mimeType: binary.mimeType,\n    originalUrl: webhookData.imageUrl,\n    userId: userId\n  },\n  binary: item.binary  // Pass the ENTIRE binary object unchanged\n};"
+      },
+      "id": "35fc838c-a17a-4c2c-a4e6-1d514d1ed8dd",
+      "name": "Prepare Image",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7472,
+        1872
+      ]
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.fileName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1q1L83__jeuRxxa1U0rkRaUjydVck1mBB",
+          "mode": "list",
+          "cachedResultName": "Invoices",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1q1L83__jeuRxxa1U0rkRaUjydVck1mBB"
+        },
+        "options": {}
+      },
+      "id": "d32660a3-1196-400f-a88d-214fc228777e",
+      "name": "Upload to Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        7664,
+        1872
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "CEL5XZntBryi9I6a",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "share",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "reader",
+            "type": "anyone"
+          }
+        },
+        "options": {}
+      },
+      "id": "4c4396f8-b928-4359-a7ba-38531f08535e",
+      "name": "Make File Public",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        7856,
+        1872
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "CEL5XZntBryi9I6a",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.requestBody }}",
+        "options": {}
+      },
+      "id": "5384b753-743d-4a9b-91b5-da1c1e22cbef",
+      "name": "OpenAI Vision (HTTP)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        8256,
+        1872
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "DQX28WREINIoUWoo",
+          "name": "Teo openai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get OpenAI response\nconst openAIData = $input.first().json;\n\n// Extract the response content\nlet response = openAIData.choices[0].message.content;\n\n// Parse JSON response\nlet extracted;\ntry {\n  // Remove markdown code blocks if present\n  const cleanResponse = response.replace(/```(?:json)?\\s*([\\s\\S]*?)```/g, '$1').trim();\n  extracted = JSON.parse(cleanResponse);\n} catch (e) {\n  throw new Error('OpenAI did not return valid JSON. Response: ' + response);\n}\n\n// Validate required fields\nif (!extracted.company_name || extracted.company_name === null) {\n  throw new Error('Could not extract company name from invoice.');\n}\n\nif (!extracted.amount || extracted.amount === null || extracted.amount === 0) {\n  throw new Error('Could not extract amount from invoice.');\n}\n\nif (!extracted.date || extracted.date === null) {\n  throw new Error('Could not extract date from invoice.');\n}\n\n// Get Google Drive file info\nconst driveData = $('Upload to Google Drive').first().json;\nconst driveUrl = `https://drive.google.com/file/d/${driveData.id}/view`;\n\n// Format and return data\nreturn {\n  json: {\n    company_name: extracted.company_name,\n    amount: parseFloat(extracted.amount),\n    currency: extracted.currency || 'EUR',\n    date: extracted.date,\n    category: extracted.category || 'Other',\n    processed_at: new Date().toISOString(),\n    drive_file_id: driveData.id,\n    drive_url: driveUrl,\n    file_name: driveData.name\n  }\n};"
+      },
+      "id": "5be86d0a-2349-4cff-a071-6b471f8fa04e",
+      "name": "Parse & Validate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8448,
+        1872
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1GS4WpmMw2eiJXsUeYSZiCA-BlNpunYRUpQxY_Y94nNs",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Invoices",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $json.date }}",
+            "Company": "={{ $json.company_name }}",
+            "Amount": "={{ $json.amount }}",
+            "Currency": "={{ $json.currency }}",
+            "Category": "={{ $json.category }}",
+            "Processed At": "={{ $json.processed_at }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Amount",
+              "displayName": "Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Currency",
+              "displayName": "Currency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Processed At",
+              "displayName": "Processed At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Drive URL",
+              "displayName": "Drive URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "File Name",
+              "displayName": "File Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "aa29bf61-943d-4acc-b255-1bad564c038a",
+      "name": "Save to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        8688,
+        1872
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ZKEuSXNi8Hoc2dz7",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "https://app.slack.com/client/T07JGFYRWN9/C07JY2SGXG9",
+          "mode": "url"
+        },
+        "text": "=💰 *New Invoice Processed*\n*Company:* {{ $('Parse & Validate').item.json.company_name }}\n*Amount:* {{ $('Parse & Validate').item.json.currency }} {{ $('Parse & Validate').item.json.amount }}\n*Date:* {{ $('Parse & Validate').item.json.date }}\n*Category:* {{ $('Parse & Validate').item.json.category }}\n*File:* <{{ $('Parse & Validate').item.json.drive_url }}|View in Google Drive>\nProcessed at {{ $('Parse & Validate').item.json.processed_at }}",
+        "otherOptions": {}
+      },
+      "id": "a30a4ab9-59d1-4855-a7cf-aa4703d1c33d",
+      "name": "Send to Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [
+        8688,
+        2048
+      ],
+      "webhookId": "9b2eb43f-d22d-43e8-9de6-dd8cd9b8499c",
+      "credentials": {
+        "slackApi": {
+          "id": "LmmEoyH6yMjYZeFV",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"data\": {\n    \"company_name\": \"{{ $('Parse & Validate').item.json.company_name }}\",\n    \"amount\": \"{{ $('Parse & Validate').item.json.amount }}\",\n    \"currency\": \"{{ $('Parse & Validate').item.json.currency }}\",\n    \"date\": \"{{ $('Parse & Validate').item.json.date }}\",\n    \"category\": \"{{ $('Parse & Validate').item.json.category }}\",\n    \"drive_url\": \"{{ $('Parse & Validate').item.json.drive_url }}\",\n    \"drive_file_id\": \"{{ $('Parse & Validate').item.json.drive_file_id }}\",\n    \"file_name\": \"{{ $('Parse & Validate').item.json.file_name }}\",\n    \"processed_at\": \"{{ $('Parse & Validate').item.json.processed_at }}\"\n  },\n  \"message\": \"Invoice processed successfully\"\n}",
+        "options": {}
+      },
+      "id": "9979336c-7c4f-4c5d-88b0-278819b4ae22",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        8944,
+        1872
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\n\n// Get the public Google Drive URL from Make File Public node\nconst driveFileId = $('Upload to Google Drive').first().json.id;\nconst publicUrl = `https://drive.google.com/uc?export=view&id=${driveFileId}`;\n\n// Get current year for context\nconst currentYear = new Date().getFullYear();\n\n// Build the OpenAI request payload using the public URL\nconst requestBody = {\n  \"model\": \"gpt-4o\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": `You are analyzing an invoice or receipt image. Extract information with ABSOLUTE PRECISION.\n\nCRITICAL RULES:\n1. Read ONLY the text that is ACTUALLY VISIBLE in this image\n2. Do NOT make up, guess, or invent ANY information\n3. If you cannot CLEARLY READ a field, return null for that field\n4. Pay EXTREME attention to the date - read it EXACTLY as shown\n\nCURRENT CONTEXT:\n- Today's date is ${new Date().toISOString().split('T')[0]}\n- Current year is ${currentYear}\n- Most invoices are from recent years (${currentYear-1} or ${currentYear})\n\nReturn ONLY this JSON structure:\n\n{\n  \"company_name\": \"string or null\",\n  \"amount\": \"number or null\",\n  \"currency\": \"string or null\",\n  \"date\": \"YYYY-MM-DD or null\",\n  \"category\": \"string or null\"\n}\n\nFIELD EXTRACTION RULES:\n\ncompany_name: The SELLER/BUSINESS issuing the invoice (look near logo/letterhead, or near ΑΦΜ for Greek invoices)\n\namount: The FINAL TOTAL including all taxes and VAT. Return as a number.\n\ncurrency: Usually EUR (€) for Greek invoices, USD ($) for American\n\ndate: **READ THE DATE VERY CAREFULLY**\n- Look for words like \"ΗΜΕΡΟΜΗΝΙΑ\", \"DATE\", \"Ημερομηνία\", or similar\n- Greek format is typically DD/MM/YYYY (e.g., 25/12/2024 means December 25, 2024)\n- European format is DD/MM/YYYY, American is MM/DD/YYYY\n- Convert to YYYY-MM-DD format\n- Double-check the year - invoices are typically recent (${currentYear-1} or ${currentYear})\n- If the year looks wrong (like 2022 when we're in ${currentYear}), re-examine the date field\n- Return EXACTLY what you see, converted to YYYY-MM-DD\n\ncategory: Choose from: Office Supplies, Travel, Meals, Software, Hardware, Services, Other\n\nReturn ONLY the JSON object. No markdown. No code blocks. No explanation.`\n        },\n        {\n          \"type\": \"image_url\",\n          \"image_url\": {\n            \"url\": publicUrl\n          }\n        }\n      ]\n    }\n  ],\n  \"max_tokens\": 500,\n  \"temperature\": 0\n};\n\nreturn {\n  json: {\n    requestBody: requestBody\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8064,
+        1872
+      ],
+      "id": "a2e19d23-3394-46e2-949b-e2680c7d633b",
+      "name": "Build OpenAI Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Download Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Image": {
+      "main": [
+        [
+          {
+            "node": "Prepare Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Image": {
+      "main": [
+        [
+          {
+            "node": "Upload to Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Make File Public",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Make File Public": {
+      "main": [
+        [
+          {
+            "node": "Build OpenAI Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Vision (HTTP)": {
+      "main": [
+        [
+          {
+            "node": "Parse & Validate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Validate": {
+      "main": [
+        [
+          {
+            "node": "Save to Google Sheets",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build OpenAI Request": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Vision (HTTP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "d5fbcde1-c3c8-4431-9667-aa8f2c2a24d2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "96add2e303f72aa16a39eea436903593869549c40bd26622ad76490ad225eb9e"
+  },
+  "id": "JCcTvYviLmfUCXIQ",
+  "tags": []
+}

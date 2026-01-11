@@ -1,0 +1,157 @@
+{
+  "name": "Calorie Analyzer - Complete",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "analyze-food",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "34792c10-ada0-41fc-88cc-43f609198ec3",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        1472,
+        144
+      ],
+      "webhookId": "analyze-food"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the request body\nconst body = $input.item.json.body;\nlet imageData = body.image;\n\n// Add data URI prefix if not present\nif (!imageData.startsWith('data:image')) {\n  // Detect image type from base64 header or default to jpeg\n  let imageType = 'jpeg';\n  \n  // Check first few characters of base64 to detect PNG\n  if (imageData.startsWith('iVBORw0KGgo')) {\n    imageType = 'png';\n  } else if (imageData.startsWith('R0lGOD')) {\n    imageType = 'gif';\n  } else if (imageData.startsWith('UklGR')) {\n    imageType = 'webp';\n  }\n  \n  imageData = `data:image/${imageType};base64,${imageData}`;\n}\n\n// Return the prepared data\nreturn {\n  json: {\n    image: imageData,\n    prompt: body.prompt\n  }\n};"
+      },
+      "id": "e49ae23f-0c1b-40f9-91f7-b7c29bd6fe62",
+      "name": "Prepare Image",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ \n  {\n    \"model\": \"gpt-4o\",\n    \"messages\": [\n      {\n        \"role\": \"user\",\n        \"content\": [\n          {\n            \"type\": \"text\",\n            \"text\": $json.prompt\n          },\n          {\n            \"type\": \"image_url\",\n            \"image_url\": {\n              \"url\": $json.image\n            }\n          }\n        ]\n      }\n    ],\n    \"max_tokens\": 500,\n    \"temperature\": 0.3\n  }\n}}",
+        "options": {}
+      },
+      "id": "7ee9645c-9c29-48f9-964c-90fb918e5ff3",
+      "name": "OpenAI Vision API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1920,
+        144
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "DQX28WREINIoUWoo",
+          "name": "Teo openai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the content from OpenAI's response\nconst response = $input.item.json;\n\n// Check if response has the expected structure\nif (!response.choices || !response.choices[0] || !response.choices[0].message) {\n  throw new Error('Invalid OpenAI response structure');\n}\n\nconst content = response.choices[0].message.content;\n\nif (!content) {\n  throw new Error('No content in OpenAI response');\n}\n\n// Remove markdown code blocks if present (```json ... ```)\nconst cleanContent = content.replace(/```json\\n?|\\n?```/g, '').trim();\n\n// Parse the JSON\nlet nutritionData;\ntry {\n  nutritionData = JSON.parse(cleanContent);\n} catch (error) {\n  throw new Error(`Failed to parse JSON: ${error.message}. Content: ${cleanContent}`);\n}\n\n// Validate that we have the required fields\nif (!nutritionData.foodName || typeof nutritionData.calories !== 'number') {\n  throw new Error('Parsed data missing required fields');\n}\n\n// Return clean JSON\nreturn { \n  json: nutritionData \n};"
+      },
+      "id": "87b94631-815b-4d8c-bd51-44b6edf47d3d",
+      "name": "Parse Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2144,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "f89d588b-e5f0-41dd-ae52-5c1438ba815c",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        2352,
+        144
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Image": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Vision API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Vision API": {
+      "main": [
+        [
+          {
+            "node": "Parse Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "fa16b906-8271-43e8-871e-9933e55f142d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "96add2e303f72aa16a39eea436903593869549c40bd26622ad76490ad225eb9e"
+  },
+  "id": "bornxdeAsGRkMd3w",
+  "tags": []
+}
