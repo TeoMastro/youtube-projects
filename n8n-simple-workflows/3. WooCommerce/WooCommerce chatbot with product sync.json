@@ -1,0 +1,1023 @@
+{
+  "name": "WooCommerce Product Sync - chatbot",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        1168,
+        464
+      ],
+      "id": "15b7a270-bba4-4c60-8f40-ebebc8a63219",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Calculate 24 hours ago\nconst now = new Date();\nconst hoursAgo = 24;\nconst modifiedAfter = new Date(now.getTime() - (hoursAgo * 60 * 60 * 1000));\n\n// Format for WooCommerce API (ISO 8601)\nconst modifiedAfterISO = modifiedAfter.toISOString();\n\nreturn [{\n  json: {\n    modified_after: modifiedAfterISO\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1456,
+        464
+      ],
+      "id": "a6b9cb5b-bd9e-4d4a-bf75-07c3b7f33d59",
+      "name": "Calculate Date"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": true,
+        "options": {
+          "after": "={{ $json.modified_after }}"
+        }
+      },
+      "type": "n8n-nodes-base.wooCommerce",
+      "typeVersion": 1,
+      "position": [
+        1728,
+        464
+      ],
+      "id": "b2f04936-0ee6-4318-b0df-7cb30d260f0e",
+      "name": "Get Updated Products",
+      "credentials": {
+        "wooCommerceApi": {
+          "id": "cn5HDPwXd5kwCNex",
+          "name": "WooCommerce account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const products = [];\n\nfor (const item of $input.all()) {\n  const product = item.json;\n  \n  const productText = `Product Name: ${product.name}\nDescription: ${product.description || product.short_description || ''}\nPrice: ${product.price}\nCategory: ${product.categories?.map(cat => cat.name).join(', ') || 'Uncategorized'}\nSKU: ${product.sku || ''}\nStock Status: ${product.stock_status || ''}`;\n  \n  const metadata = {\n    product_id: product.id.toString(),\n    name: product.name,\n    price: product.price,\n    category: product.categories?.map(cat => cat.name).join(', ') || 'Uncategorized',\n    category_ids: product.categories?.map(cat => cat.id) || [],\n    sku: product.sku || '',\n    url: product.permalink,\n    stock_status: product.stock_status,\n    image_url: product.images?.[0]?.src || '',\n    last_modified: product.date_modified\n  };\n  \n  products.push({\n    json: {\n      pageContent: productText,\n      metadata: metadata\n    }\n  });\n}\n\nreturn products;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        464
+      ],
+      "id": "199b6210-d9f3-4c71-bfcd-14429a8f978c",
+      "name": "Prepare Product Data"
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
+      "id": "7e7002d6-187d-4c14-9d93-fd15bc92d39d",
+      "name": "Embeddings OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1,
+      "position": [
+        2800,
+        656
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "DQX28WREINIoUWoo",
+          "name": "Teo openai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "product_embeddings",
+          "mode": "list",
+          "cachedResultName": "product_embeddings"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "id": "a3affccc-a709-45dd-adf3-0a8576687504",
+      "name": "Upsert to Supabase",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [
+        2832,
+        464
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "hdEsvFEvAff3CiW1",
+          "name": "woo chatbot"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        1424,
+        -144
+      ],
+      "id": "2827d339-86d4-4336-a075-676772c1ecdf",
+      "name": "Manual Trigger - Initial Sync"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.wooCommerce",
+      "typeVersion": 1,
+      "position": [
+        1632,
+        -144
+      ],
+      "id": "a9c1453f-93f3-4028-9c91-fcda0c9ef866",
+      "name": "Get All Products",
+      "credentials": {
+        "wooCommerceApi": {
+          "id": "cn5HDPwXd5kwCNex",
+          "name": "WooCommerce account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const products = [];\n\nfor (const item of $input.all()) {\n  const product = item.json;\n  \n  // Create a text representation of the product for embedding\n  const productText = `Product Name: ${product.name}\nDescription: ${product.description || product.short_description || ''}\nPrice: ${product.price}\nCategory: ${product.categories?.map(cat => cat.name).join(', ') || 'Uncategorized'}\nSKU: ${product.sku || ''}\nStock Status: ${product.stock_status || ''}`;\n  \n  // Prepare metadata\n  const metadata = {\n    product_id: product.id.toString(),\n    name: product.name,\n    price: product.price,\n    category: product.categories?.map(cat => cat.name).join(', ') || 'Uncategorized',\n    category_ids: product.categories?.map(cat => cat.id) || [],\n    sku: product.sku || '',\n    url: product.permalink,\n    stock_status: product.stock_status,\n    image_url: product.images?.[0]?.src || '',\n    last_modified: product.date_modified\n  };\n  \n  products.push({\n    json: {\n      pageContent: productText,\n      metadata: metadata\n    }\n  });\n}\n\nreturn products;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1840,
+        -144
+      ],
+      "id": "a07f24ea-b286-40d3-808b-02483458cb30",
+      "name": "Prepare Product Data - Initial"
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
+      "id": "6f6809cf-eaf2-4776-a8a9-2c0e91d3a57a",
+      "name": "Embeddings OpenAI - Initial",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1,
+      "position": [
+        2016,
+        48
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "DQX28WREINIoUWoo",
+          "name": "Teo openai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "product_embeddings",
+          "mode": "list",
+          "cachedResultName": "product_embeddings"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "id": "f12ab5ae-fe10-480f-96e7-feb3a13ef739",
+      "name": "Insert to Supabase - Initial",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [
+        2048,
+        -144
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "hdEsvFEvAff3CiW1",
+          "name": "woo chatbot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.pageContent }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "=product_id",
+                "value": "={{ $json.metadata.product_id }}"
+              },
+              {
+                "name": "category",
+                "value": "={{ $json.metadata.category }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "dd120569-c0fc-4b67-aa86-4d072c812e12",
+      "name": "Default Data Loader1",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        2112,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "id": "175ab310-e2f4-48cd-8160-3f0a9a542f76",
+      "name": "Recursive Character Text Splitter1",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        2112,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.pageContent }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "=product_id",
+                "value": "={{ $json.metadata.product_id }}"
+              },
+              {
+                "name": "category",
+                "value": "={{ $json.metadata.category }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "47841883-1ae0-4c6e-8167-2912d0fd6fbe",
+      "name": "Default Data Loader2",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        2912,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "id": "dd98888e-73dc-4547-acf8-27e4b233e292",
+      "name": "Recursive Character Text Splitter2",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        3120,
+        832
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        1136,
+        1424
+      ],
+      "id": "fcc42825-53af-4ce8-8ffe-2f71b00eddcd",
+      "name": "When chat message received",
+      "webhookId": "19501efe-4fcb-44e0-82d0-7a89080bc0ec"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are Alex, a helpful sales assistant for our electronics store. Your job is to help customers find products accurately and efficiently.\n\n## Core Rules:\n- NEVER make up product information - only use data from the product database\n- NEVER invent features, prices, or specifications\n- If you don't find a product in the database, say so clearly\n- Keep responses SHORT and to the point - no fluff or extra commentary\n- Always search the database before responding about products\n\n## Your Process:\n\n### If the customer asks for a SPECIFIC product:\n1. Immediately search the database for that product\n2. If found: Present the product with name, price, key features, and link\n3. If not found: Say \"I couldn't find that product. Can you describe what you're looking for?\"\n\n### If the customer doesn't know what they want:\n1. Ask ONE specific question at a time to narrow down options\n2. Questions should be about: budget, category, specific features, or use case\n3. Once you have enough info, search the database\n4. Present 2-3 matching products with links\n\n## Response Format:\n\n### When presenting products:\n- Product name\n- Price\n- 1-2 key features (only from database)\n- Link: https://woo-test.teomastro.com/product/[product-slug]/ OR use metadata->url if available\n- Stock status (if relevant)\n\nKeep it brief - 2-3 sentences per product maximum.\n\n### When asking questions:\nAsk ONE clear question. Don't ramble. Examples:\n- \"What's your budget?\"\n- \"Wireless or wired?\"\n- \"What will you use it for?\"\n\n## Example Interactions:\n\nUser: \"Do you have the Audio-Technica ATH-G1WL?\"\nYou: [Search database immediately]\n\"Yes! The Audio-Technica ATH-G1WL is $179. It features 2.4GHz wireless, 45mm drivers, flip-to-mute mic, and 15-hour battery. Currently in stock.\nhttps://woo-test.teomastro.com/product/audio-technica-ath-g1wl/\"\n\nUser: \"I need headphones\"\nYou: \"What's your budget, and will you use them for gaming, work, or music?\"\n\nUser: \"Gaming headphones under $200\"\nYou: [Search database]\n\"Found 2 options:\n1. Audio-Technica ATH-G1WL - $179. Wireless, 15hr battery, gaming-focused.\nhttps://woo-test.teomastro.com/product/audio-technica-ath-g1wl/\n\n2. [Product 2 name] - $[price]. [Key feature].\n[Link]\n\nWhich interests you?\"\n\n## Critical Reminders:\n- Search the database for EVERY product question\n- Use ONLY information from the database - no assumptions\n- Keep responses SHORT\n- One question at a time when gathering requirements\n- Always provide product links using: https://woo-test.teomastro.com/product/[slug]/ or the url from metadata"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1392,
+        1424
+      ],
+      "id": "17b80bae-fe18-4765-a434-14eeea96c63d",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.1",
+          "mode": "list",
+          "cachedResultName": "gpt-5.1"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1312,
+        1696
+      ],
+      "id": "d5b24efd-8b0b-4e62-b9f9-fbf7855888cc",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "DQX28WREINIoUWoo",
+          "name": "Teo openai"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        1440,
+        1760
+      ],
+      "id": "bfb1a03f-4bc0-444c-9e3b-8050af5cf867",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "rGm36wSwUBMEZmQc",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "This tool searches our product database using semantic similarity. The database contains WooCommerce products. On the row metadata there is the category of the product so you know which row belongs to what product. Also on the metadata there is the category_id, which should be used to create valid urls for the products.",
+        "tableName": {
+          "__rl": true,
+          "value": "rpc/match_documents",
+          "mode": "list",
+          "cachedResultName": "rpc/match_documents"
+        },
+        "topK": 60,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        1616,
+        1584
+      ],
+      "id": "66c040ba-b5ea-4e1b-b53d-76ab8ac6532e",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "hdEsvFEvAff3CiW1",
+          "name": "woo chatbot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1616,
+        1792
+      ],
+      "id": "5a38e4c8-fc88-4173-a39b-2981c4f40439",
+      "name": "Embeddings OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "DQX28WREINIoUWoo",
+          "name": "Teo openai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "product_embeddings",
+        "filterType": "string",
+        "filterString": "=metadata->>product_id=eq.{{ $json.product_id }}"
+      },
+      "id": "5c4daebf-ff68-44d4-9bbb-c51252f0933b",
+      "name": "Delete Old Doc Rows",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2240,
+        464
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "hdEsvFEvAff3CiW1",
+          "name": "woo chatbot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const originalProducts = $('Get Updated Products').all();\n\nconsole.log(`Retrieved ${originalProducts.length} products`);\n\n// Return them in the same format they came in\nreturn originalProducts;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2448,
+        464
+      ],
+      "id": "2c260ce6-36a1-4655-8a0d-4e93cddaf55f",
+      "name": "Retrieve Stored Products"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract product IDs for deletion AND pass through original products\nconst items = $input.all();\n\nif (items.length === 0) {\n  return [];\n}\n\n// Store original products to pass through\nconst originalProducts = items.map(item => item.json);\n\n// Create deletion items\nconst deletionItems = [];\nfor (const item of items) {\n  deletionItems.push({\n    json: {\n      product_id: item.json.id.toString(),\n      _original_product: item.json  // Store original for later\n    }\n  });\n}\n\nreturn deletionItems;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        464
+      ],
+      "id": "4dcd388b-5df7-42a2-a862-27097e954e28",
+      "name": "Extract Product IDs"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        1168,
+        1008
+      ],
+      "id": "d1043da5-251d-4473-9ea3-9c61453d5bf1",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://sxxxroixmfjwvnzoqnfw.supabase.co/rest/v1/rpc/get_unique_product_ids",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1392,
+        912
+      ],
+      "id": "acd241ea-1dc1-4395-9fc2-5795f8facc30",
+      "name": "HTTP Request",
+      "credentials": {
+        "supabaseApi": {
+          "id": "hdEsvFEvAff3CiW1",
+          "name": "woo chatbot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "product_embeddings",
+        "filterType": "string",
+        "filterString": "=metadata->>product_id=eq.{{ $json.product_id }}"
+      },
+      "id": "0424601d-69b2-4528-9153-5336433a269a",
+      "name": "Delete Old Doc Rows1",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2176,
+        944
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "hdEsvFEvAff3CiW1",
+          "name": "woo chatbot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.wooCommerce",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        1088
+      ],
+      "id": "15f9a006-6106-4f08-88cb-7c3766a801e0",
+      "name": "Get All Products1",
+      "credentials": {
+        "wooCommerceApi": {
+          "id": "cn5HDPwXd5kwCNex",
+          "name": "WooCommerce account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all items from merge\nconst allItems = $input.all();\n\n// Find where WooCommerce products start and Supabase IDs start\n// WooCommerce products have 'id', 'name', etc.\n// Supabase response has 'product_id'\nconst wooProducts = allItems.filter(item => item.json.id !== undefined);\nconst supabaseResponse = allItems.filter(item => item.json.product_id !== undefined);\n\n// If supabaseResponse is empty, check if it's nested\nlet supabaseProductIds;\nif (supabaseResponse.length === 0) {\n  // Data might be in a different format, check first item\n  const firstItem = allItems.find(item => Array.isArray(item.json));\n  if (firstItem && Array.isArray(firstItem.json)) {\n    supabaseProductIds = firstItem.json.map(item => item.product_id);\n  }\n} else {\n  supabaseProductIds = supabaseResponse.map(item => item.json.product_id);\n}\n\nconst wooProductIds = new Set(wooProducts.map(item => item.json.id.toString()));\n\nconsole.log(`✅ WooCommerce has ${wooProductIds.size} products`);\nconsole.log(`📊 Supabase has ${supabaseProductIds.length} unique product IDs`);\n\n// Find product IDs in Supabase that no longer exist in WooCommerce\nconst deletedProductIds = supabaseProductIds.filter(id => !wooProductIds.has(id));\n\nif (deletedProductIds.length === 0) {\n  console.log('✅ No deleted products found - database is in sync!');\n  return [];\n}\n\nconsole.log(`🗑️ Found ${deletedProductIds.length} deleted products to remove from Supabase`);\n\n// Return one item per deleted product ID for the deletion node\nconst results = [];\nfor (const productId of deletedProductIds) {\n  results.push({\n    json: {\n      product_id: productId\n    }\n  });\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        1008
+      ],
+      "id": "8bf78bbc-f735-45eb-a20e-049b80dc2118",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "55942a6b-ba03-4170-98a9-54a9dcd85846",
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1840,
+        1008
+      ],
+      "id": "2300a45f-ec66-4f16-87c1-cc034b261564",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1536,
+        1008
+      ],
+      "id": "dc254993-c534-49a5-aed8-37c387b3faa8",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1984,
+        928
+      ],
+      "id": "7280d717-2a75-4ef6-b5f6-a798333f56f8",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "content": "TO GET ALL THE UNIQUE PRODUCT IDS FROM SUPABASE\n\n\ncreate or replace function get_unique_product_ids()\nreturns table (product_id text)\nlanguage sql as $$\n  select distinct metadata->>'product_id' \n  from product_embeddings \n  where metadata->>'product_id' is not null;\n$$;",
+        "height": 288
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        736,
+        880
+      ],
+      "id": "71122b2e-82b9-452e-bdcc-e519ed25ad69",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "THE SQL I RAN IN SUPABASE TO SET UP THE VECTOR DB\n\n-- Drop existing table\nDROP TABLE IF EXISTS product_embeddings CASCADE;\n\n-- Create new table with correct structure\nCREATE TABLE product_embeddings (\n  id bigserial PRIMARY KEY,\n  content text NOT NULL,\n  metadata jsonb DEFAULT '{}'::jsonb,\n  embedding vector(1536),\n  created_at timestamp with time zone DEFAULT now(),\n  updated_at timestamp with time zone DEFAULT now()\n);\n\n-- Add generated product_id column for easier querying\nALTER TABLE product_embeddings \nADD COLUMN product_id text \nGENERATED ALWAYS AS (metadata->>'product_id') STORED;\n\n-- Create unique index for upserts\nCREATE UNIQUE INDEX product_embeddings_product_id_unique \nON product_embeddings(product_id);\n\n-- Create vector similarity index\nCREATE INDEX product_embeddings_embedding_idx \nON product_embeddings USING ivfflat (embedding vector_cosine_ops)\nWITH (lists = 100);\n\n-- Create metadata indexes\nCREATE INDEX product_embeddings_metadata_idx \nON product_embeddings USING gin (metadata);\n\nCREATE INDEX product_embeddings_metadata_category_idx \nON product_embeddings USING gin ((metadata -> 'category'));\n\n-- Recreate the match_documents function\nCREATE OR REPLACE FUNCTION match_documents (\n  query_embedding vector(1536),\n  match_count int DEFAULT 5,\n  filter jsonb DEFAULT '{}'\n) \nRETURNS TABLE (\n  id bigint,\n  content text,\n  metadata jsonb,\n  similarity float\n)\nLANGUAGE plpgsql\nAS $$\n#variable_conflict use_column\nBEGIN\n  RETURN QUERY\n  SELECT\n    id,\n    content,\n    metadata,\n    1 - (product_embeddings.embedding <=> query_embedding) as similarity\n  FROM product_embeddings\n  WHERE (filter = '{}' OR metadata @> filter)\n  ORDER BY product_embeddings.embedding <=> query_embedding\n  LIMIT match_count;\nEND;\n$$;",
+        "height": 1344,
+        "width": 448
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        176,
+        624
+      ],
+      "id": "af305b10-d586-495a-9c49-4bef43c54e30",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "ADD ALL WORKFLOW - RUN THIS ONLY THE FIRST TIME",
+        "height": 80
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1696,
+        -272
+      ],
+      "id": "1b229337-adc5-48c8-b698-459fe126f44a",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "UPDATE PRODUCTS WORKFLOW - RUNS DAILY",
+        "height": 80
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        352
+      ],
+      "id": "50bd40de-c88e-4d2f-b185-922da0eef72d",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "WORKFLOW THAT RUNS ON DELETION OF PRODUCTS",
+        "height": 80
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        816
+      ],
+      "id": "0ccea9b4-abd2-4a86-aaa4-c7c91c3415fa",
+      "name": "Sticky Note4"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Calculate Date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Date": {
+      "main": [
+        [
+          {
+            "node": "Get Updated Products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Updated Products": {
+      "main": [
+        [
+          {
+            "node": "Extract Product IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Product Data": {
+      "main": [
+        [
+          {
+            "node": "Upsert to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Upsert to Supabase",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger - Initial Sync": {
+      "main": [
+        [
+          {
+            "node": "Get All Products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Products": {
+      "main": [
+        [
+          {
+            "node": "Prepare Product Data - Initial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Product Data - Initial": {
+      "main": [
+        [
+          {
+            "node": "Insert to Supabase - Initial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI - Initial": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert to Supabase - Initial",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter1": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader1",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader1": {
+      "ai_document": [
+        [
+          {
+            "node": "Insert to Supabase - Initial",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter2": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader2",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader2": {
+      "ai_document": [
+        [
+          {
+            "node": "Upsert to Supabase",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Old Doc Rows": {
+      "main": [
+        [
+          {
+            "node": "Retrieve Stored Products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve Stored Products": {
+      "main": [
+        [
+          {
+            "node": "Prepare Product Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Product IDs": {
+      "main": [
+        [
+          {
+            "node": "Delete Old Doc Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get All Products1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Old Doc Rows1": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Products1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Delete Old Doc Rows1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "d17bf93e-8248-4dd2-84da-c6f02ca267fe",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "96add2e303f72aa16a39eea436903593869549c40bd26622ad76490ad225eb9e"
+  },
+  "id": "_keRigjp4OyFYiFAHGwGw",
+  "tags": []
+}

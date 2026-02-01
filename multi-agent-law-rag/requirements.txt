@@ -7,6 +7,13 @@ langchain-text-splitters==0.3.2
 langgraph==0.2.45
 langgraph-checkpoint==2.0.2
 
+# LangSmith for tracing and monitoring
+langsmith==0.1.147
+
+# Evaluation and Testing
+ragas==0.2.9  # RAG evaluation metrics
+datasets==3.2.0  # For evaluation datasets
+
 # Vector Store (FAISS - better Windows compatibility)
 faiss-cpu==1.8.0
 pydantic==2.10.3
@@ -18,6 +25,9 @@ rank-bm25==0.2.2
 
 # PDF Processing
 pdfplumber==0.11.4
+pymupdf==1.24.14  # Alternative PDF reader, better font handling
+pdf2image==1.17.0  # Convert PDF pages to images for cloud OCR
+Pillow==11.0.0  # Image processing
 
 # OpenAI
 openai==1.57.2

@@ -24,6 +24,12 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = Field(default="gpt-4-turbo-preview", env="OPENAI_MODEL")
     OPENAI_EMBEDDING_MODEL: str = Field(default="text-embedding-3-small", env="OPENAI_EMBEDDING_MODEL")
 
+    # LangSmith Configuration (for tracing and monitoring)
+    LANGCHAIN_TRACING_V2: bool = Field(default=False, env="LANGCHAIN_TRACING_V2")
+    LANGCHAIN_API_KEY: Optional[str] = Field(default=None, env="LANGCHAIN_API_KEY")
+    LANGCHAIN_PROJECT: str = Field(default="greek-legal-rag", env="LANGCHAIN_PROJECT")
+    LANGCHAIN_ENDPOINT: str = Field(default="https://api.smith.langchain.com", env="LANGCHAIN_ENDPOINT")
+
     # Application Configuration
     APP_NAME: str = Field(default="Greek Legal Document RAG", env="APP_NAME")
     ENVIRONMENT: str = Field(default="development", env="ENVIRONMENT")
@@ -43,6 +49,12 @@ class Settings(BaseSettings):
     CHUNK_OVERLAP: int = Field(default=200, env="CHUNK_OVERLAP")
     MAX_CHUNKS_PER_PDF: int = Field(default=1000, env="MAX_CHUNKS_PER_PDF")
     MAX_TOKENS_PER_EMBEDDING_BATCH: int = Field(default=250000, env="MAX_TOKENS_PER_EMBEDDING_BATCH")
+
+    # OCR Configuration (for scanned PDFs and images with CID codes)
+    # Uses OpenAI Vision API - no local installation required
+    ENABLE_OCR: bool = Field(default=True, env="ENABLE_OCR")
+    OCR_DPI: int = Field(default=300, env="OCR_DPI")
+    OCR_MODEL: str = Field(default="gpt-4o", env="OCR_MODEL")
 
     # Retrieval Configuration
     RETRIEVAL_TOP_K: int = Field(default=5, env="RETRIEVAL_TOP_K")
@@ -84,6 +96,15 @@ except Exception as e:
     print(f"Error loading configuration: {e}")
     print("Please ensure .env file exists with required settings")
     raise
+
+# Set LangSmith environment variables for automatic tracing
+# LangChain automatically picks up these environment variables
+if settings.LANGCHAIN_TRACING_V2:
+    os.environ["LANGCHAIN_TRACING_V2"] = "true"
+    if settings.LANGCHAIN_API_KEY:
+        os.environ["LANGCHAIN_API_KEY"] = settings.LANGCHAIN_API_KEY
+    os.environ["LANGCHAIN_PROJECT"] = settings.LANGCHAIN_PROJECT
+    os.environ["LANGCHAIN_ENDPOINT"] = settings.LANGCHAIN_ENDPOINT
 
 
 def get_documents_path() -> Path:

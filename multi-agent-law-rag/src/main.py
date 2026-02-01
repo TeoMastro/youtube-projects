@@ -225,6 +225,58 @@ def validate():
 
 
 @cli.command()
+@click.option('--dataset', type=str, default='evaluation_dataset.json', help='Path to evaluation dataset JSON file')
+@click.option('--output-dir', type=str, default='evaluation_results', help='Directory to save results')
+def evaluate(dataset, output_dir):
+    """Run comprehensive evaluation on the RAG system."""
+    from .evaluation.evaluator import RAGEvaluator
+
+    console.print(Panel("[bold blue]RAG System Evaluation[/bold blue]"))
+    console.print(f"Dataset: {dataset}")
+    console.print(f"Output directory: {output_dir}\n")
+
+    try:
+        # Initialize evaluator
+        evaluator = RAGEvaluator(dataset_path=dataset)
+
+        # Run evaluation
+        with console.status("[bold green]Running evaluation..."):
+            results = evaluator.run_evaluation(save_results=True, output_dir=output_dir)
+
+        # Display summary
+        console.print("\n[bold green]✓ Evaluation Complete![/bold green]\n")
+
+        # RAGAS Metrics Table
+        ragas = results.get('ragas_metrics', {})
+        if ragas:
+            console.print("[bold]RAGAS Metrics:[/bold]")
+            table = Table()
+            table.add_column("Metric", style="cyan")
+            table.add_column("Score", style="green")
+
+            table.add_row("Faithfulness", f"{ragas.get('faithfulness', 0):.3f}")
+            table.add_row("Answer Relevancy", f"{ragas.get('answer_relevancy', 0):.3f}")
+            table.add_row("Context Precision", f"{ragas.get('context_precision', 0):.3f}")
+            table.add_row("Context Recall", f"{ragas.get('context_recall', 0):.3f}")
+
+            console.print(table)
+            console.print()
+
+        console.print(f"[dim]Full results saved to {output_dir}/[/dim]")
+
+    except FileNotFoundError as e:
+        console.print(f"[red]Error: {e}[/red]")
+        console.print("\n[yellow]Create an evaluation dataset first:[/yellow]")
+        console.print("  1. Copy evaluation_dataset.json.example to evaluation_dataset.json")
+        console.print("  2. Add your test cases")
+        console.print("  3. Run: python -m src.main evaluate")
+    except Exception as e:
+        console.print(f"[red]Error during evaluation: {e}[/red]")
+        import traceback
+        console.print(traceback.format_exc())
+
+
+@cli.command()
 def config_info():
     """Show current configuration."""
     from .config import settings
@@ -237,11 +289,14 @@ def config_info():
 
     table.add_row("OpenAI Model", settings.OPENAI_MODEL)
     table.add_row("Embedding Model", settings.OPENAI_EMBEDDING_MODEL)
+    table.add_row("OCR Model", settings.OCR_MODEL)
     table.add_row("Chunk Size", str(settings.CHUNK_SIZE))
     table.add_row("Retrieval Top K", str(settings.RETRIEVAL_TOP_K))
     table.add_row("", "")
     table.add_row("RAG Agent", "✓" if settings.ENABLE_RAG_AGENT else "✗")
     table.add_row("Temporal Agent", "✓" if settings.ENABLE_TEMPORAL_AGENT else "✗")
+    table.add_row("OCR Enabled", "✓" if settings.ENABLE_OCR else "✗")
+    table.add_row("LangSmith Tracing", "✓" if settings.LANGCHAIN_TRACING_V2 else "✗")
 
     console.print(table)
 

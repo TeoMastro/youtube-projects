@@ -1,0 +1,26 @@
+{
+  "description": "Evaluation dataset for Greek Legal Document RAG System",
+  "version": "1.0",
+  "test_cases": [
+    {
+      "id": "test_001",
+      "question": "Ποιοι νόμοι δημοσιεύτηκαν το 2024;",
+      "expected_answer": "List of laws published in 2024 with ΦΕΚ numbers"
+    },
+    {
+      "id": "test_002",
+      "question": "Τι προβλέπει η νομοθεσία για την εργασία;",
+      "expected_answer": "Information about labor laws from retrieved documents"
+    },
+    {
+      "id": "test_003",
+      "question": "Τι είναι το ΦΕΚ;",
+      "expected_answer": "ΦΕΚ is the Greek Government Gazette where laws are officially published"
+    },
+    {
+      "id": "test_004",
+      "question": "Ποια νομοθεσία ισχύει για την προστασία δεδομένων μετά το 2020;",
+      "expected_answer": "Data protection laws published after 2020"
+    }
+  ]
+}

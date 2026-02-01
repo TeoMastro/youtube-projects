@@ -79,6 +79,17 @@ async def run_multi_agent_query(query: str) -> Dict[str, Any]:
     result = await graph.ainvoke(initial_state)
 
     # Extract relevant results
+    # Combine retrieved documents from both agents for evaluation
+    rag_docs = result.get("rag_sources", [])
+    temporal_docs = result.get("temporal_sources", [])
+    all_retrieved_docs = rag_docs + temporal_docs
+
+    # Extract actual document content for RAGAS evaluation
+    retrieved_contexts = []
+    for doc in all_retrieved_docs:
+        if hasattr(doc, 'page_content') and doc.page_content:
+            retrieved_contexts.append(doc.page_content)
+
     return {
         "answer": result.get("final_answer", ""),
         "confidence": result.get("confidence_score", 0.0),
@@ -87,6 +98,7 @@ async def run_multi_agent_query(query: str) -> Dict[str, Any]:
         "rag_confidence": result.get("rag_confidence", 0.0),
         "temporal_confidence": result.get("temporal_confidence", 0.0),
         "rag_source_metadata": result.get("rag_source_metadata", None),
+        "retrieved_contexts": retrieved_contexts,
     }
 
 
