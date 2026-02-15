@@ -1,0 +1,268 @@
+{
+  "name": "GitHub Repo to WordPress Draft Article",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Generate Article from GitHub Repo",
+        "formDescription": "Select a GitHub repository and provide article guidelines to generate a draft WordPress post.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "GitHub Repository",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Article Guidelines",
+              "fieldType": "textarea",
+              "placeholder": "Describe the tone, audience, structure, length, and any specific points to cover..."
+            },
+            {
+              "fieldLabel": "WordPress Post Title (optional override)",
+              "placeholder": "Leave blank to let AI generate the title"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a8ce7dab-9a0e-4a75-a06a-daca6c7f7dd4",
+      "name": "Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        96,
+        -224
+      ],
+      "webhookId": "ab005823-43a0-438d-9ca6-03847fc6a7b4"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a blog writer for a personal portfolio/showcase website. You write articles about software projects to highlight their value, the problems they solve, and how they help users. You are NOT writing technical documentation — you are telling a story about a project.\n\n## Repository Info\n- Owner: TeoMastro\n- Repository name: {{ $json['GitHub Repository'] }}\n\n## Tools Available\nYou have two GitHub tools:\n- **List files**: Lists files in a directory. Use owner \"TeoMastro\" and repository \"{{ $json['GitHub Repository'] }}\". Set path to \"\" for root, or a folder name like \"src\" to browse subdirectories.\n- **Get file**: Reads a file's content. Use owner \"TeoMastro\" and repository \"{{ $json['GitHub Repository'] }}\". Set the file path like \"README.md\" or \"src/index.ts\".\n\nCRITICAL: When using these tools, always use exactly \"TeoMastro\" as the owner and \"{{ $json['GitHub Repository'] }}\" as the repository name. Never use URLs. Never guess — use the exact values above.\n\n## Research Strategy\n1. First, list files in the root directory (path: \"\")\n2. Read README.md — this is your primary source of context\n3. Read package.json (or equivalent) to understand the tech stack\n4. Only if the README lacks detail, browse into src/ or other key folders and read 2-3 important files\n5. Stop researching after reading 5-6 files maximum\n\n## User's Additional Guidelines\n{{ $json['Article Guidelines'] }}\n\n## ARTICLE STRUCTURE — FOLLOW THIS EXACTLY\n\nEvery article MUST use the following sections in this order. Do not skip, merge, or reorder them.\n\n### Section 1: The Problem (2-3 paragraphs)\nOpen with a relatable problem or pain point this project addresses. Why does this project need to exist? What frustration, inefficiency, or gap does it solve? Make the reader feel the problem before you introduce the solution. Do NOT mention the project name yet.\n\n### Section 2: The Solution — What This Project Does (2-3 paragraphs)\nIntroduce the project by name. Explain what it does in plain language — focus on features, user experience, and outcomes. What can a user actually DO with it? Describe it as if you're showing it to someone non-technical. Avoid code entirely in this section.\n\n### Section 3: Key Features (use a short list)\nHighlight 4-6 standout features or capabilities. Each item should be one sentence focused on user value, not technical implementation. For example, say \"Role-based access so admins and employees see different views\" instead of \"Uses next-auth with credentials provider and role-based middleware\".\n\n### Section 4: Screenshots\nAdd this exact HTML block as a placeholder:\n<div class=\"screenshots-placeholder\" style=\"background: #f4f4f4; border: 2px dashed #ccc; padding: 40px; text-align: center; margin: 20px 0; border-radius: 8px;\">\n  <p style=\"color: #888; font-size: 1.1em;\">📸 <strong>Screenshots coming soon</strong></p>\n  <p style=\"color: #aaa;\">Visual walkthrough of the application will be added here.</p>\n</div>\n\n### Section 5: Built With (brief)\nOne short paragraph or a compact inline list mentioning the main technologies. Keep it brief — no more than 3-4 sentences. Focus on the stack categories (framework, database, auth, styling) rather than listing every dependency. This is a footnote, not the focus of the article.\n\n### Section 6: Links\nAdd this exact HTML block at the end:\n<div class=\"project-links\" style=\"margin-top: 30px; padding: 20px; background: #f9f9f9; border-radius: 8px;\">\n  <h3>Explore the Project</h3>\n  <p>🔗 <strong>GitHub:</strong> <a href=\"https://github.com/TeoMastro/{{ $json['GitHub Repository'] }}\" target=\"_blank\">View the source code</a></p>\n  <p>🎥 <strong>YouTube:</strong> <a href=\"YOUTUBE_LINK_HERE\" target=\"_blank\">Watch the demo video</a></p>\n</div>\n\n## WRITING RULES\n- Write in a warm, conversational tone — like you're explaining the project to a friend\n- Keep the total article between 600-1000 words (excluding the HTML placeholder blocks)\n- Do NOT include code snippets, terminal commands, or installation steps\n- Do NOT write about how to set up or run the project\n- Do NOT deep-dive into technical implementation details\n- Focus on WHY the project matters, WHAT it does, and WHO it helps\n- Use <h2> for section titles, <p> for paragraphs, <ul>/<li> for lists, <strong> and <em> for emphasis\n- Do NOT include <html>, <head>, or <body> tags\n\n## OUTPUT FORMAT\nReturn your response in this EXACT format:\n\nTITLE: [A compelling, non-technical title]\n\n---CONTENT---\n\n[The full article in HTML following the structure above]",
+        "options": {}
+      },
+      "id": "133d3946-0355-4d7e-be61-0ee2382dbb4b",
+      "name": "AI Generate Article",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        576,
+        -224
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = String($input.item.json.output || '');\n\nconst marker = '---CONTENT---';\nconst markerIndex = raw.indexOf(marker);\n\nlet title = 'Untitled';\nlet content = raw;\n\nif (markerIndex !== -1) {\n  const before = raw.substring(0, markerIndex);\n  content = raw.substring(markerIndex + marker.length).trim();\n  \n  const tIdx = before.indexOf('TITLE:');\n  if (tIdx !== -1) {\n    const afterTitle = before.substring(tIdx + 6);\n    const newline = afterTitle.indexOf('\\n');\n    title = newline !== -1 ? afterTitle.substring(0, newline).trim() : afterTitle.trim();\n  }\n}\n\nreturn [{ json: { title, content } }];"
+      },
+      "id": "5b3767b0-2740-40a6-ac97-8bdd4575ca71",
+      "name": "Parse AI Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        -224
+      ]
+    },
+    {
+      "parameters": {
+        "title": "={{ $json.title }}",
+        "additionalFields": {
+          "content": "={{ $json.content }}",
+          "status": "draft"
+        }
+      },
+      "id": "b4ed78fc-e8df-4f65-adb8-c4a705c8ca7b",
+      "name": "Create WordPress Draft",
+      "type": "n8n-nodes-base.wordpress",
+      "typeVersion": 1,
+      "position": [
+        1344,
+        -224
+      ],
+      "credentials": {
+        "wordpressApi": {
+          "id": "i7QdTNS865TfNOIa",
+          "name": "Wordpress account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.1",
+          "mode": "list",
+          "cachedResultName": "gpt-5.1"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        432,
+        64
+      ],
+      "id": "c0bcdf6f-90a1-4b61-aff4-a840ea65b06c",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "DQX28WREINIoUWoo",
+          "name": "Teo openai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Repository_Owner', ``, 'string') }}"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Repository_Name', ``, 'string') }}"
+        },
+        "filePath": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('File_Path', ``, 'string') }}",
+        "asBinaryProperty": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('As_Binary_Property', ``, 'boolean') }}",
+        "additionalParameters": {}
+      },
+      "type": "n8n-nodes-base.githubTool",
+      "typeVersion": 1.1,
+      "position": [
+        656,
+        64
+      ],
+      "id": "5909fa79-6bf0-4efa-b685-2d49694469eb",
+      "name": "Get a file in GitHub",
+      "webhookId": "3b148162-9046-4447-887c-09914cb8091d",
+      "credentials": {
+        "githubApi": {
+          "id": "I4b3c1uEUzNjCSo2",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "list",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Repository_Owner', ``, 'string') }}"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Repository_Name', ``, 'string') }}"
+        },
+        "filePath": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Path', ``, 'string') }}"
+      },
+      "type": "n8n-nodes-base.githubTool",
+      "typeVersion": 1.1,
+      "position": [
+        784,
+        32
+      ],
+      "id": "376639e2-1282-4014-9b0e-2c4a5c7c7c34",
+      "name": "List files in GitHub",
+      "webhookId": "c0f48b83-3f74-4be6-ae23-f9ea2c7b40d2",
+      "credentials": {
+        "githubApi": {
+          "id": "I4b3c1uEUzNjCSo2",
+          "name": "GitHub account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Generate Article",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Generate Article": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Output": {
+      "main": [
+        [
+          {
+            "node": "Create WordPress Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create WordPress Draft": {
+      "main": [
+        []
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Generate Article",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file in GitHub": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Generate Article",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List files in GitHub": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Generate Article",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "fb7213d5-364f-4093-8429-d56030ad94fd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "96add2e303f72aa16a39eea436903593869549c40bd26622ad76490ad225eb9e"
+  },
+  "id": "jos6lV6Yj1ekMfATAGYfA",
+  "tags": []
+}
