@@ -1,0 +1,492 @@
+{
+  "name": "Greek Business Portal — Natural Language Search → Google Sheets",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Αναζήτηση Επιχειρήσεων ΓΕΜΗ",
+        "formDescription": "Περιγράψτε τι επιχειρήσεις ψάχνετε και τα αποτελέσματα θα εξαχθούν αυτόματα στο Google Sheets.\n\nΠαραδείγματα:\n• Οδοντίατροι στη Θεσσαλονίκη\n• Εστιατόρια στην Αθήνα\n• Λογιστικά γραφεία στην Πάτρα\n• Ξενοδοχεία στα Χανιά\n• Φαρμακεία στον Πειραιά",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Τι ψάχνετε;",
+              "placeholder": "π.χ. Οδοντίατροι στη Θεσσαλονίκη",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Πόσα αποτελέσματα;",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "10"
+                  },
+                  {
+                    "option": "25"
+                  },
+                  {
+                    "option": "50"
+                  },
+                  {
+                    "option": "100"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bc21bedc-ce6f-42d5-8703-9453dfb6daf8",
+      "name": "Search Form1",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        4416,
+        1936
+      ],
+      "webhookId": "75017fbc-2bba-43cb-8252-6d5eb9d0d33d"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json['Τι ψάχνετε;'] }}",
+        "options": {
+          "systemMessage": "You are a Greek business search assistant. The user will describe what kind of businesses they are looking for in natural language (in Greek). You must extract structured search parameters and return ONLY a valid JSON object, no other text, no explanation, no markdown.\n\nYou can extract:\n- activities: An 8-digit KAD code (string). Common mappings:\n  86210000 = Γενικοί ιατροί\n  86220000 = Ειδικοί ιατροί\n  86230000 = Οδοντίατροι\n  86900000 = Φυσιοθεραπεία, ψυχολόγοι\n  47730000 = Φαρμακεία\n  86100000 = Νοσοκομεία / Κλινικές\n  56100000 = Εστιατόρια / Ταβέρνες\n  56210000 = Catering\n  56300000 = Μπαρ / Καφετέριες\n  47110000 = Σούπερ μάρκετ / Παντοπωλεία\n  10710000 = Αρτοποιεία / Φούρνοι\n  47240000 = Ζαχαροπλαστεία\n  47710000 = Ρούχα / Ένδυση\n  47720000 = Παπούτσια\n  47410000 = Ηλεκτρονικά / Υπολογιστές\n  47610000 = Βιβλιοπωλεία\n  47750000 = Καλλυντικά\n  47761000 = Ανθοπωλεία\n  47650000 = Παιχνίδια\n  47590000 = Έπιπλα\n  47520000 = Οικοδομικά υλικά\n  69200000 = Λογιστικά γραφεία\n  69100000 = Δικηγόροι\n  68310000 = Μεσιτικά γραφεία\n  71110000 = Αρχιτέκτονες\n  71121000 = Μηχανικοί / Τεχνικά γραφεία\n  62010000 = Πληροφορική / Software\n  62020000 = IT σύμβουλοι\n  70220000 = Σύμβουλοι επιχειρήσεων\n  73110000 = Διαφημιστικές\n  78200000 = Γραφεία εύρεσης εργασίας\n  74200000 = Φωτογράφοι\n  96020000 = Κομμωτήρια\n  96040000 = Κέντρα αισθητικής / SPA\n  85320000 = Φροντιστήρια\n  85510000 = Γυμναστήρια\n  85590000 = Σχολές γλωσσών, μουσικής\n  55100000 = Ξενοδοχεία\n  55200000 = Ενοικιαζόμενα δωμάτια\n  79110000 = Τουριστικά γραφεία\n  49320000 = Ταξί\n  77110000 = Ενοικίαση αυτοκινήτων\n  41200000 = Κατασκευαστικές\n  43210000 = Ηλεκτρολόγοι\n  43220000 = Υδραυλικοί\n  45200000 = Συνεργεία αυτοκινήτων\n  45110000 = Αντιπροσωπείες αυτοκινήτων\n  64190000 = Τράπεζες\n  65120000 = Ασφαλιστικές\n\n- citySearch: The city/location name as the user typed it, in UPPERCASE GREEK. Just extract the city name. For example: ΘΕΣΣΑΛΟΝΙΚΗ, ΑΘΗΝΑ, ΠΑΤΡΑ, ΧΑΝΙΑ, ΠΕΙΡΑΙΑΣ.\n\nRules:\n- If no city/location is mentioned, omit the citySearch field.\n- If no specific business type is mentioned, omit the activities field.\n- NEVER include fields that are not needed.\n- NEVER search for specific companies by name.\n\nReturn ONLY a JSON object. No explanation, no markdown fences."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        4640,
+        1936
+      ],
+      "id": "9982c0b6-5333-449b-b04c-425e9ddbb6b7",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        4528,
+        2144
+      ],
+      "id": "d0be0922-5603-4c2c-9f0d-3a50c96a8285",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "DQX28WREINIoUWoo",
+          "name": "openai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiOutput = $input.first().json.output || '';\n\nlet parsed = {};\ntry {\n  let cleaned = aiOutput.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  parsed = JSON.parse(cleaned);\n} catch (e) {\n  const match = aiOutput.match(/\\{[^}]+\\}/);\n  if (match) {\n    try { parsed = JSON.parse(match[0]); } catch (e2) {}\n  }\n}\n\nreturn [{ json: { aiParsed: parsed, citySearch: parsed.citySearch || '' } }];"
+      },
+      "id": "440beafe-d0bb-44fe-8003-74cc70815de6",
+      "name": "Parse AI Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4944,
+        1936
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://opendata-api.businessportal.gr/api/opendata/v1/metadata/municipalities",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            },
+            {
+              "name": "api_key",
+              "value": "2iDw3J9Ljez66M2EuBRJ8vcxE2g4RKDT"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {}
+          }
+        }
+      },
+      "id": "f8f67606-31b4-49d6-8478-cbf53e5298cc",
+      "name": "Fetch Municipalities",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5120,
+        1936
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build a compact lookup string from ALL municipalities\n// The HTTP node returns the array as items, we need to collect them\nconst items = $input.all();\nconst citySearch = $('Parse AI Output').first().json.citySearch;\nconst aiParsed = $('Parse AI Output').first().json.aiParsed;\n\n// The municipalities come as either a single item with array body,\n// or multiple items. Handle both cases.\nlet municipalities = [];\n\nif (items.length === 1) {\n  const data = items[0].json;\n  if (Array.isArray(data)) {\n    municipalities = data;\n  } else if (data && typeof data === 'object') {\n    // Maybe the array is in a property\n    const keys = Object.keys(data);\n    // Check if it looks like an indexed object (0, 1, 2...)\n    if (keys.length > 0 && keys[0] === '0') {\n      municipalities = Object.values(data);\n    } else {\n      // Try common wrapper properties\n      municipalities = data.body || data.data || data.result || [];\n    }\n  }\n} else {\n  // Multiple items = each item is a municipality\n  municipalities = items.map(item => item.json);\n}\n\n// Build compact list: \"id=descr\" per line\nconst compactList = municipalities\n  .filter(m => m && m.id && m.descr)\n  .map(m => m.id + '=' + m.descr)\n  .join('\\n');\n\nreturn [{ json: { \n  municipalityList: compactList,\n  municipalityCount: municipalities.length,\n  citySearch,\n  aiParsed\n}}];"
+      },
+      "id": "558c518f-0546-435b-978d-43594a207f81",
+      "name": "Prepare Municipality List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5344,
+        1936
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=The user is looking for businesses in: {{ $json.citySearch }}\n\nHere is the complete list of municipalities (format: id=name):\n{{ $json.municipalityList }}\n\nWhich municipality ID best matches \"{{ $json.citySearch }}\"?\nReturn ONLY the numeric ID.",
+        "options": {
+          "systemMessage": "You match Greek city names to official municipality records. Each record is \"id=MUNICIPALITY_NAME / PREFECTURE_NAME\" in Greek genitive case.\n\nExamples of how Greek cities appear in genitive in the records:\n- Θεσσαλονίκη → ΘΕΣΣΑΛΟΝΙΚΗΣ\n- Αθήνα → ΑΘΗΝΑΙΩΝ\n- Πάτρα → ΠΑΤΡΕΩΝ\n- Πειραιάς → ΠΕΙΡΑΙΩΣ\n- Ηράκλειο → ΗΡΑΚΛΕΙΟΥ\n- Χανιά → ΧΑΝΙΩΝ\n\nPick the ONE municipality whose name best matches the requested city. For major cities, pick the main municipality (e.g. for Θεσσαλονίκη pick ΘΕΣΣΑΛΟΝΙΚΗΣ/ΘΕΣΣΑΛΟΝΙΚΗΣ, not a suburb).\n\nReturn ONLY the id number. No text, no explanation. If you cannot find a match, return NONE."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        5520,
+        1936
+      ],
+      "id": "88f6e0b7-1e9d-4336-848b-a9d3f5f8db58",
+      "name": "AI Match Municipality"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        5456,
+        2144
+      ],
+      "id": "fc94a75b-16c9-447d-881e-fea52a976523",
+      "name": "OpenAI Chat Model 2",
+      "credentials": {
+        "openAiApi": {
+          "id": "DQX28WREINIoUWoo",
+          "name": "Teo openai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const municipalityOutput = ($input.first().json.output || '').trim();\nconst aiParsed = $('Prepare Municipality List').first().json.aiParsed;\nconst resultsSize = $('Search Form1').first().json['Πόσα αποτελέσματα;'] || '10';\n\nconst baseUrl = 'https://opendata-api.businessportal.gr/api/opendata/v1/companies';\nconst parts = [\n  'resultsOffset=0',\n  'resultsSize=' + encodeURIComponent(resultsSize),\n  'resultsSortBy=' + encodeURIComponent('+arGemi'),\n  'isActive=true'\n];\n\n// Extract just the numeric ID from AI output\nconst idMatch = municipalityOutput.match(/\\d+/);\nif (idMatch) {\n  parts.push('municipalities=' + encodeURIComponent(idMatch[0]));\n}\n\nif (aiParsed.activities) {\n  parts.push('activities=' + encodeURIComponent(aiParsed.activities));\n}\nif (aiParsed.name) {\n  parts.push('name=' + encodeURIComponent(aiParsed.name));\n}\n\nconst fullUrl = baseUrl + '?' + parts.join('&');\n\nreturn [{ json: { fullUrl, municipalityId: idMatch ? idMatch[0] : 'NONE', aiParsed, resultsSize } }];"
+      },
+      "id": "a15d4ee7-6b8f-4d01-8655-56328c1a3cb2",
+      "name": "Build Final URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5824,
+        1936
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.fullUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            },
+            {
+              "name": "api_key",
+              "value": "your-gemi-api-key"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {}
+          }
+        }
+      },
+      "id": "4bca4a09-3ac8-492b-9769-245816d7feaf",
+      "name": "Query Business Portal API1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        6000,
+        1936
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst results = response.searchResults || [];\n\nif (results.length === 0) {\n  return [{ json: {\n    'Company Name': 'Δεν βρέθηκαν αποτελέσματα',\n    'Email': '',\n    'Phone': '',\n    'Website': '',\n    'City': '',\n    'Persons / Representatives': ''\n  }}];\n}\n\nconst rows = results.map(company => {\n  const persons = (company.persons || []).map(p =>\n    `${p.personName?.trim() || ''} (${p.role || ''})${p.percentage && p.percentage !== '-' ? ' - ' + p.percentage : ''}`\n  ).join('; ');\n\n  return {\n    json: {\n      'Company Name': company.coNameEl || '',\n      'Email': company.email || '',\n      'Phone': company.phone || '',\n      'Website': company.url || '',\n      'City': company.city || '',\n      'Persons / Representatives': persons\n    }\n  };\n});\n\nreturn rows;"
+      },
+      "id": "7606f690-30bf-430f-9706-5b36792f93f9",
+      "name": "Transform for Sheets1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6224,
+        1936
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1UnPBZFsSk8tlD18AwXpaExeM5xQdr1x7VRVHev0hcGM/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Φύλλο1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1UnPBZFsSk8tlD18AwXpaExeM5xQdr1x7VRVHev0hcGM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Company Name",
+              "displayName": "Company Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Persons / Representatives",
+              "displayName": "Persons / Representatives",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "1b30bac4-8af2-4c5c-bc63-58458ff8e138",
+      "name": "Append to Google Sheets1",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        6432,
+        1936
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ZKEuSXNi8Hoc2dz7",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Search Form1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Output": {
+      "main": [
+        [
+          {
+            "node": "Fetch Municipalities",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Municipalities": {
+      "main": [
+        [
+          {
+            "node": "Prepare Municipality List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Municipality List": {
+      "main": [
+        [
+          {
+            "node": "AI Match Municipality",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Match Municipality": {
+      "main": [
+        [
+          {
+            "node": "Build Final URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model 2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Match Municipality",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Final URL": {
+      "main": [
+        [
+          {
+            "node": "Query Business Portal API1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Business Portal API1": {
+      "main": [
+        [
+          {
+            "node": "Transform for Sheets1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform for Sheets1": {
+      "main": [
+        [
+          {
+            "node": "Append to Google Sheets1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append to Google Sheets1": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "122a0eeb-3e82-4f7e-8787-058512722a1e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "96add2e303f72aa16a39eea436903593869549c40bd26622ad76490ad225eb9e"
+  },
+  "id": "LBeaB3tUcEQYKksCy7XKS",
+  "tags": []
+}
